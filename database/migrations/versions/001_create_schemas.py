@@ -34,6 +34,7 @@ SCHEMAS = ("raw", "staging", "core", "analytics")
 
 
 def upgrade() -> None:
+    op.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto")
     for schema in SCHEMAS:
         op.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
 

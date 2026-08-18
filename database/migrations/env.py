@@ -22,7 +22,7 @@ from sqlalchemy import engine_from_config, pool
 # of the working directory alembic is invoked from.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-load_dotenv()  # loads .env in local/dev; no-op if absent (e.g. in prod/CI)
+load_dotenv(override=True)  # loads .env in local/dev; no-op if absent (e.g. in prod/CI)
 
 from database.base import Base  # noqa: E402
 from database.connection import build_database_url  # noqa: E402

@@ -118,6 +118,7 @@ ipython_config.py
 .pdm-build/
 scripts.txt
 docs/
+projectflow.txt
 
 
 # pixi
