@@ -66,8 +66,8 @@ from sqlalchemy.dialects import postgresql
 
 
 # Alembic revision identifiers.
-revision: str = "003_create_raw_reference_tables"
-down_revision: Union[str, None] = "002_create_ingestion_metadata"
+revision: str = "003_raw_reference"
+down_revision: Union[str, None] = "002_ingestion_metadata"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
