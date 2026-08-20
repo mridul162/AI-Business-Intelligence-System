@@ -1,0 +1,6 @@
+Stock_Location_ID,Location_Name,Location_Type,Partner_ID,Active
+LOC001,Main Warehouse,Warehouse,,true
+LOC002,Sourav,Partner Home,PTR001,true
+LOC003,Jabed,Partner Home,PTR002,true
+LOC004,Fazle,Partner Home,PTR003,true
+LOC005,Mridul,Partner Home,PTR004,true

@@ -1,0 +1,7 @@
+Return_ID,Return_Date,Return_Type,Reference_Order_ID,Reference_Purchase_ID,Location_ID,Refund_Amount,Cash_Account_ID,Returned_By,Reason,Status,Notes,Created_At
+RET000001,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUSTOMER_RETURN,ORD000001,,LOC001,3000,CASH004,Mridul,,Completed,,Sat Aug 15 2026 17:37:01 GMT+0600 (Bangladesh Standard Time)
+RET000002,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUSTOMER_RETURN,ORD000001,,LOC001,2500,CASH004,Mridul,,Completed,,Sat Aug 15 2026 17:43:44 GMT+0600 (Bangladesh Standard Time)
+RET000003,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUSTOMER_RETURN,ORD000009,,LOC001,400,CASH004,Fazle,,Completed,,Sat Aug 15 2026 21:58:41 GMT+0600 (Bangladesh Standard Time)
+RET000004,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUSTOMER_RETURN,ORD000008,,LOC001,1200,CASH001,Jabed,,Completed,,Sat Aug 15 2026 22:00:27 GMT+0600 (Bangladesh Standard Time)
+RET000005,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),SUPPLIER_RETURN,,PUR000002,LOC001,2000,CASH003,Mridul,,Completed,,Sat Aug 15 2026 22:53:50 GMT+0600 (Bangladesh Standard Time)
+RET000006,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),SUPPLIER_RETURN,,PUR000002,LOC001,2000,CASH003,Mridul,,Completed,,Sat Aug 15 2026 23:05:40 GMT+0600 (Bangladesh Standard Time)

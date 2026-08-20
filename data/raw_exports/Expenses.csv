@@ -1,0 +1,3 @@
+Expense_ID,Expense_Date,Expense_Category,Description,Amount,Payment_Method,Cash_Account_ID,Paid_By,Reference_ID,Created_By,Created_At
+EXP000001,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),Packaging,Ghee er Dibba,1000,Cash,CASH002,Jabed,,Jabed,Sat Aug 15 2026 22:07:31 GMT+0600 (Bangladesh Standard Time)
+EXP000002,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),Rent,Fazle Room,2700,Cash,CASH001,Sourav,Room_August,Sourav,Sat Aug 15 2026 22:09:09 GMT+0600 (Bangladesh Standard Time)

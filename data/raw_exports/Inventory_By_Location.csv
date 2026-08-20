@@ -1,0 +1,42 @@
+Location_ID,Location_Name,Location_Type,Partner_ID,Product_ID,Product_Name,Unit,Quantity,Cost_Price,Stock_Value,Reorder_Level,Stock_Status
+LOC004,Fazle,Partner Home,PTR003,PRD007,Litchi Honey,kg,5,405,2025,10,LOW_STOCK
+LOC004,Fazle,Partner Home,PTR003,PRD006,Mustard Honey,kg,5,390,1950,10,LOW_STOCK
+LOC003,Jabed,Partner Home,PTR002,PRD012,Mustard Oil (1st Press / Kachi Ghani),L,5,235,1175,10,LOW_STOCK
+LOC003,Jabed,Partner Home,PTR002,PRD022,Sugarcane Patali Gur,kg,5,155,775,1,OK
+LOC001,Main Warehouse,Warehouse,,PRD030,Almonds,kg,0.49,1385,678.65,0.5,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD005,Black Seed Honey,kg,8.75,715,6256.25,5,OK
+LOC001,Main Warehouse,Warehouse,,PRD014,Black Seed Oil,L,1,1735,1735,0.2,OK
+LOC001,Main Warehouse,Warehouse,,PRD004,Boroi Honey,kg,2.5,665,1662.5,1,OK
+LOC001,Main Warehouse,Warehouse,,PRD028,Cashew Nuts,kg,0.64,1505,963.2,0.5,OK
+LOC001,Main Warehouse,Warehouse,,PRD023,Chia Seeds,kg,1,400,400,5,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD016,Chili Powder,kg,0.8,695,556,1,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD010,Coconut Oil (Extra Virgin),L,0.8,1240,992,1,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD011,Coconut Oil (Hot Pressed),L,0.25,840,210,1,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD017,Coriander Powder,kg,0.4,395,158,0.2,OK
+LOC001,Main Warehouse,Warehouse,,PRD018,Cumin Powder,kg,0.4,895,358,0.2,OK
+LOC001,Main Warehouse,Warehouse,,PRD009,Deshi Cow Milk Ghee,kg,2.3,1241.65,2855.795,1,OK
+LOC001,Main Warehouse,Warehouse,,PRD008,Ghee,kg,10.25,1030,10557.5,5,OK
+LOC001,Main Warehouse,Warehouse,,PRD032,Golden Raisins,kg,0.25,935,233.75,0.5,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD003,Hill Tracts Honey,kg,5.5,615,3382.5,1,OK
+LOC001,Main Warehouse,Warehouse,,PRD024,Isabgul,kg,0.25,1460,365,0.25,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD001,Kholisha Honey,kg,5.9,715,4218.5,1,OK
+LOC001,Main Warehouse,Warehouse,,PRD007,Litchi Honey,kg,38.1,405,15430.5,10,OK
+LOC001,Main Warehouse,Warehouse,,PRD019,Meat Spice Mix,kg,0.4,2395,958,0.2,OK
+LOC001,Main Warehouse,Warehouse,,PRD026,Mixed Nuts,kg,0.75,1050,787.5,0,OK
+LOC001,Main Warehouse,Warehouse,,PRD006,Mustard Honey,kg,51.5,390,20085,10,OK
+LOC001,Main Warehouse,Warehouse,,PRD012,Mustard Oil (1st Press / Kachi Ghani),L,7,235,1645,10,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD029,Peanuts,kg,0.14,365,51.1,0.5,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD033,Pumpkin Seeds,kg,0.168,805,135.24,0.5,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD035,Sakura Plum,kg,0.54,1335,720.9000000000001,0.5,OK
+LOC001,Main Warehouse,Warehouse,,PRD020,Sugarcane Jaggery Cubes,kg,3,215,645,1,OK
+LOC001,Main Warehouse,Warehouse,,PRD021,Sugarcane Jaggery Powder,kg,1,230,230,1,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD022,Sugarcane Patali Gur,kg,4,155,620,1,OK
+LOC001,Main Warehouse,Warehouse,,PRD002,Sundarbans Honey,kg,6.9,965,6658.5,1,OK
+LOC001,Main Warehouse,Warehouse,,PRD025,Tokma Seeds,kg,1,240,240,0.25,OK
+LOC001,Main Warehouse,Warehouse,,PRD015,Turmeric Powder,kg,0.4,445,178,1,LOW_STOCK
+LOC001,Main Warehouse,Warehouse,,PRD031,Walnuts,kg,0.265,1165,308.725,0.5,LOW_STOCK
+LOC005,Mridul,Partner Home,PTR004,PRD005,Black Seed Honey,kg,2,715,1430,5,LOW_STOCK
+LOC005,Mridul,Partner Home,PTR004,PRD007,Litchi Honey,kg,8,405,3240,10,LOW_STOCK
+LOC005,Mridul,Partner Home,PTR004,PRD006,Mustard Honey,kg,5,390,1950,10,LOW_STOCK
+LOC002,Sourav,Partner Home,PTR001,PRD007,Litchi Honey,kg,5,405,2025,10,LOW_STOCK
+LOC002,Sourav,Partner Home,PTR001,PRD006,Mustard Honey,kg,5,390,1950,10,LOW_STOCK

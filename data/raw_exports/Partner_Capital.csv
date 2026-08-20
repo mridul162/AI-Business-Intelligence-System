@@ -1,0 +1,6 @@
+Capital_Transaction_ID,Transaction_Date,Transaction_Type,Partner_ID,Cash_Account_ID,Amount,Reference_ID,Notes,Created_By,Created_At
+CAP000001,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),INVESTMENT,PTR04,CASH004,10000,CAP000001,,Mridul,Sat Aug 15 2026 18:05:00 GMT+0600 (Bangladesh Standard Time)
+CAP000002,Sat Aug 15 2026 18:05:02 GMT+0600 (Bangladesh Standard Time),INVESTMENT,PTR02,CASH002,20000,CAP000002,,Jabed,Sat Aug 15 2026 23:11:29 GMT+0600 (Bangladesh Standard Time)
+CAP000003,Sat Aug 15 2026 18:05:02 GMT+0600 (Bangladesh Standard Time),INVESTMENT,PTR01,CASH001,20000,CAP000003,,Sourav,Sat Aug 15 2026 23:14:04 GMT+0600 (Bangladesh Standard Time)
+CAP000004,Sat Aug 15 2026 23:14:05 GMT+0600 (Bangladesh Standard Time),INVESTMENT,PTR03,CASH003,20000,CAP000004,,Fazle,Sat Aug 15 2026 23:14:25 GMT+0600 (Bangladesh Standard Time)
+CAP000005,Sat Aug 15 2026 23:14:29 GMT+0600 (Bangladesh Standard Time),INVESTMENT,PTR04,CASH004,20000,CAP000005,,Mridul,Sat Aug 15 2026 23:14:48 GMT+0600 (Bangladesh Standard Time)

@@ -1,0 +1,36 @@
+Product_ID,Product_Name,Opening_Stock,Stock_In,Stock_Out,Current_Stock,Reorder_Level,Stock_Status
+PRD001,Kholisha Honey,4.9,2,1,5.9,1,OK
+PRD002,Sundarbans Honey,4.9,2,0,6.9,1,OK
+PRD003,Hill Tracts Honey,5.5,2,2,5.5,1,OK
+PRD004,Boroi Honey,1,2,0.5,2.5,1,OK
+PRD005,Black Seed Honey,11.75,2,3,10.75,5,OK
+PRD006,Mustard Honey,70.5,22,26,66.5,10,OK
+PRD007,Litchi Honey,59.1,32,35,56.099999999999994,10,OK
+PRD008,Ghee,7.25,6,3,10.25,5,OK
+PRD009,Deshi Cow Milk Ghee,2.3,0,0,2.3,1,OK
+PRD010,Coconut Oil (Extra Virgin),0.8,0,0,0.8,1,LOW
+PRD011,Coconut Oil (Hot Pressed),0.25,0,0,0.25,1,LOW
+PRD012,Mustard Oil (1st Press / Kachi Ghani),12,5,5,12,10,OK
+PRD013,Mustard Oil (Machine Press),0,0,0,0,10,LOW
+PRD014,Black Seed Oil,1,0.2,0.2,1,0.2,OK
+PRD015,Turmeric Powder,0.4,0,0,0.4,1,LOW
+PRD016,Chili Powder,0.8,0,0,0.8,1,LOW
+PRD017,Coriander Powder,0.4,0,0,0.4,0.2,OK
+PRD018,Cumin Powder,0.4,0,0,0.4,0.2,OK
+PRD019,Meat Spice Mix,0.4,0,0,0.4,0.2,OK
+PRD020,Sugarcane Jaggery Cubes,3,0,0,3,1,OK
+PRD021,Sugarcane Jaggery Powder,1,0,0,1,1,LOW
+PRD022,Sugarcane Patali Gur,9,5,5,9,1,OK
+PRD023,Chia Seeds,1,0,0,1,5,LOW
+PRD024,Isabgul,0.25,0,0,0.25,0.25,LOW
+PRD025,Tokma Seeds,1,0,0,1,0.25,OK
+PRD026,Mixed Nuts,0.75,0,0,0.75,,OK
+PRD027,Honey Nuts (Litchi Honey),0,0,0,0,,LOW
+PRD028,Cashew Nuts,0.64,0,0,0.64,0.5,OK
+PRD029,Peanuts,0.14,0,0,0.14,0.5,LOW
+PRD030,Almonds,0.49,0,0,0.49,0.5,LOW
+PRD031,Walnuts,0.265,0,0,0.265,0.5,LOW
+PRD032,Golden Raisins,0.25,0,0,0.25,0.5,LOW
+PRD033,Pumpkin Seeds,0.168,0,0,0.168,0.5,LOW
+PRD034,Jorda Aloo / Bokhara Plum,0,0,0,0,0.5,LOW
+PRD035,Sakura Plum,0.54,0,0,0.54,0.5,OK

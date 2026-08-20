@@ -1,0 +1,10 @@
+Order_Status,Payment_Method,Transaction_Type,Movement_Type,Expense_Category,Purchase_Status,Transaction_Type
+Pending,Cash,IN,PURCHASE,Courier,Received,PAYMENT
+Confirmed,bKash,OUT,SALE,Packaging,Partial,EXPENSE
+Delivered,Nagad,MOVED,RETURN_IN,Transportation,Cancelled,CASH_TRANSFER
+Cancelled,Bank,,RETURN_OUT,Marketing,Pending,PURCHASE
+Returned,Other,,ADJUSTMENT,Rent,,RETURN
+,,,DAMAGE,Utilities,,INVESTMENT
+,,,TRANSFER,Purchase,,WITHDRAWAL
+,,,,Salary,,
+,,,,Other,,

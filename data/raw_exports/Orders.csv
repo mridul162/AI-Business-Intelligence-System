@@ -1,0 +1,10 @@
+Order_ID,Order_Date,Customer_ID,Subtotal,Discount,Delivery_Charge,Total_Amount,Paid,Due,Order_Status,Collected_By,Created_At
+ORD000001,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUS000394,8700,200,150,8650,5000,3650,Delivered,Mridul,Sat Aug 15 2026 17:35:03 GMT+0600 (Bangladesh Standard Time)
+ORD000002,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUS000394,1400,0,100,1500,1000,500,Delivered,Mridul,Sat Aug 15 2026 17:37:54 GMT+0600 (Bangladesh Standard Time)
+ORD000003,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUS000395,460,100,0,360,300,60,Delivered,Mridul,Sat Aug 15 2026 21:16:54 GMT+0600 (Bangladesh Standard Time)
+ORD000004,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUS000395,460,100,0,360,300,60,Delivered,Mridul,Sat Aug 15 2026 21:30:55 GMT+0600 (Bangladesh Standard Time)
+ORD000005,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUS000395,460,100,0,360,300,60,Delivered,Mridul,Sat Aug 15 2026 21:38:57 GMT+0600 (Bangladesh Standard Time)
+ORD000006,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUS000395,460,100,0,360,300,60,Delivered,Mridul,Sat Aug 15 2026 21:41:26 GMT+0600 (Bangladesh Standard Time)
+ORD000007,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUS000396,1550,50,0,1500,1500,0,Delivered,Mridul,Sat Aug 15 2026 21:52:57 GMT+0600 (Bangladesh Standard Time)
+ORD000008,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUS000397,2440,40,0,2400,2000,400,Delivered,Jabed,Sat Aug 15 2026 21:54:06 GMT+0600 (Bangladesh Standard Time)
+ORD000009,Sat Aug 15 2026 00:00:00 GMT+0600 (Bangladesh Standard Time),CUS000397,400,0,100,500,400,100,Delivered,Fazle,Sat Aug 15 2026 21:55:39 GMT+0600 (Bangladesh Standard Time)
