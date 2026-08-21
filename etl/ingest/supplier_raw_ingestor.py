@@ -1,14 +1,15 @@
 """
-Raw ingestion logic for return item records.
+Raw ingestion logic for supplier data.
 
-Reads Return_Items.csv and loads source records into raw.return_items.
-Each ingestion run is tracked through raw.ingestion_batches.
+Reads Suppliers.csv and ingests new records into raw.suppliers.
+Duplicate source records are skipped using source_row_hash.
 """
 
 from __future__ import annotations
 
 import csv
 import hashlib
+import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -26,40 +27,44 @@ from etl.utils.ingestion_batch import (
 logger = logging.getLogger(__name__)
 
 
-
-class ReturnItemRawIngestor:
-    """
-    Ingest return item data from a CSV export into raw.return_items.
-    """
+class SupplierRawIngestor:
+    """Ingest supplier CSV records into raw.suppliers."""
 
     SOURCE_SYSTEM = "HBMS"
     SOURCE_TYPE = "csv"
-    SOURCE_TABLE = "return_items"
 
     INSERT_SQL = text(
         """
-        INSERT INTO raw.return_items (
+        INSERT INTO raw.suppliers (
             ingestion_batch_id,
             source_row_number,
             source_row_hash,
-            return_item_id,
-            return_id,
-            product_id,
-            quantity,
-            unit_price,
-            line_amount
+            supplier_id,
+            supplier_name,
+            contact,
+            address,
+            active
         )
         VALUES (
             :ingestion_batch_id,
             :source_row_number,
             :source_row_hash,
-            :return_item_id,
-            :return_id,
-            :product_id,
-            :quantity,
-            :unit_price,
-            :line_amount
-        )
+            :supplier_id,
+            :supplier_name,
+            :contact,
+            :address,
+            :active
+        );
+        """
+    )
+
+    HASH_EXISTS_SQL = text(
+        """
+        SELECT EXISTS (
+            SELECT 1
+            FROM raw.suppliers
+            WHERE source_row_hash = :source_row_hash
+        );
         """
     )
 
@@ -72,30 +77,32 @@ class ReturnItemRawIngestor:
         self.csv_path = Path(csv_path)
 
     @staticmethod
-    def _clean_value(value: Any) -> str | None:
-        """Convert empty source values to None."""
+    def _clean_value(
+        value: str | None,
+    ) -> str | None:
+        """Normalize CSV values."""
+
         if value is None:
             return None
 
-        value = str(value).strip()
+        value = value.strip()
 
         return value or None
 
     @staticmethod
     def _generate_row_hash(
-        row: dict[str, Any],
+        record: dict[str, Any],
     ) -> str:
-        """Generate a deterministic hash for a source row."""
+        """Generate a deterministic hash for a supplier record."""
 
-        normalized_values = [
-            str(value).strip()
-            for key, value in sorted(row.items())
-        ]
-
-        payload = "|".join(normalized_values)
+        normalized = json.dumps(
+            record,
+            sort_keys=True,
+            default=str,
+        )
 
         return hashlib.sha256(
-            payload.encode("utf-8")
+            normalized.encode("utf-8")
         ).hexdigest()
 
     def _record_exists(
@@ -105,15 +112,7 @@ class ReturnItemRawIngestor:
         """Check whether an identical source record already exists."""
 
         result = self.session.execute(
-            text(
-                """
-                SELECT EXISTS (
-                    SELECT 1
-                    FROM raw.return_items
-                    WHERE source_row_hash = :source_row_hash
-                )
-                """
-            ),
+            self.HASH_EXISTS_SQL,
             {
                 "source_row_hash": source_row_hash,
             },
@@ -121,9 +120,11 @@ class ReturnItemRawIngestor:
 
         return bool(result.scalar())
 
-    def ingest(self) -> dict[str, Any]:
+    def ingest(
+        self,
+    ) -> dict[str, Any]:
         """
-        Execute raw ingestion from CSV into raw.return_items.
+        Read the CSV and ingest previously unseen supplier records.
         """
 
         if not self.csv_path.exists():
@@ -143,7 +144,7 @@ class ReturnItemRawIngestor:
         records_rejected = 0
 
         logger.info(
-            "Started return item raw ingestion. Batch ID: %s",
+            "Started supplier raw ingestion. Batch ID: %s",
             batch_id,
         )
 
@@ -152,9 +153,8 @@ class ReturnItemRawIngestor:
                 mode="r",
                 encoding="utf-8-sig",
                 newline="",
-            ) as csv_file:
-
-                reader = csv.DictReader(csv_file)
+            ) as file:
+                reader = csv.DictReader(file)
 
                 for row_number, row in enumerate(
                     reader,
@@ -163,35 +163,40 @@ class ReturnItemRawIngestor:
                     records_received += 1
 
                     try:
-                        source_row_hash = self._generate_row_hash(
-                            row
+                        supplier_record = {
+                            "supplier_id": self._clean_value(
+                                row.get("Supplier_ID")
+                            ),
+                            "supplier_name": self._clean_value(
+                                row.get("Supplier_Name")
+                            ),
+                            "contact": self._clean_value(
+                                row.get("Contact")
+                            ),
+                            "address": self._clean_value(
+                                row.get("Address")
+                            ),
+                            "active": self._clean_value(
+                                row.get("Active")
+                            ),
+                        }
+
+                        source_row_hash = (
+                            self._generate_row_hash(
+                                supplier_record
+                            )
                         )
 
-                        if self._record_exists(source_row_hash):
+                        if self._record_exists(
+                            source_row_hash
+                        ):
                             continue
 
                         payload = {
                             "ingestion_batch_id": batch_id,
                             "source_row_number": row_number,
                             "source_row_hash": source_row_hash,
-                            "return_item_id": self._clean_value(
-                                row.get("Return_Item_ID")
-                            ),
-                            "return_id": self._clean_value(
-                                row.get("Return_ID")
-                            ),
-                            "product_id": self._clean_value(
-                                row.get("Product_ID")
-                            ),
-                            "quantity": self._clean_value(
-                                row.get("Quantity")
-                            ),
-                            "unit_price": self._clean_value(
-                                row.get("Unit_Price")
-                            ),
-                            "line_amount": self._clean_value(
-                                row.get("Line_Amount")
-                            ),
+                            **supplier_record,
                         }
 
                         self.session.execute(
@@ -205,7 +210,7 @@ class ReturnItemRawIngestor:
                         records_rejected += 1
 
                         logger.exception(
-                            "Failed to ingest return item row %s.",
+                            "Failed to ingest supplier row %s.",
                             row_number,
                         )
 
@@ -218,7 +223,7 @@ class ReturnItemRawIngestor:
             )
 
             logger.info(
-                "Return item raw ingestion completed. "
+                "Supplier raw ingestion completed. "
                 "Batch ID: %s, Received: %s, Loaded: %s, "
                 "Rejected: %s",
                 batch_id,
@@ -236,7 +241,7 @@ class ReturnItemRawIngestor:
 
         except Exception as exc:
             logger.exception(
-                "Return item raw ingestion failed. "
+                "Supplier raw ingestion failed. "
                 "Batch ID: %s",
                 batch_id,
             )

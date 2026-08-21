@@ -1,15 +1,17 @@
 """
-Raw ingestion logic for return item records.
+Raw ingestion logic for cash account data.
 
-Reads Return_Items.csv and loads source records into raw.return_items.
-Each ingestion run is tracked through raw.ingestion_batches.
+Reads Cash_Accounts.csv and ingests previously unseen records into
+raw.cash_accounts using source_row_hash for duplicate detection.
 """
 
 from __future__ import annotations
 
 import csv
 import hashlib
+import json
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -22,44 +24,43 @@ from etl.utils.ingestion_batch import (
     mark_batch_failed,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
-
-class ReturnItemRawIngestor:
-    """
-    Ingest return item data from a CSV export into raw.return_items.
-    """
+class CashAccountRawIngestor:
+    """Ingest cash account CSV records into raw.cash_accounts."""
 
     SOURCE_SYSTEM = "HBMS"
     SOURCE_TYPE = "csv"
-    SOURCE_TABLE = "return_items"
 
     INSERT_SQL = text(
         """
-        INSERT INTO raw.return_items (
+        INSERT INTO raw.cash_accounts (
             ingestion_batch_id,
             source_row_number,
             source_row_hash,
-            return_item_id,
-            return_id,
-            product_id,
-            quantity,
-            unit_price,
-            line_amount
+            cash_account_id,
+            account_name,
+            account_type,
+            owner_id,
+            active,
+            total_in,
+            total_out,
+            current_balance
         )
         VALUES (
             :ingestion_batch_id,
             :source_row_number,
             :source_row_hash,
-            :return_item_id,
-            :return_id,
-            :product_id,
-            :quantity,
-            :unit_price,
-            :line_amount
-        )
+            :cash_account_id,
+            :account_name,
+            :account_type,
+            :owner_id,
+            :active,
+            :total_in,
+            :total_out,
+            :current_balance
+        );
         """
     )
 
@@ -72,13 +73,12 @@ class ReturnItemRawIngestor:
         self.csv_path = Path(csv_path)
 
     @staticmethod
-    def _clean_value(value: Any) -> str | None:
-        """Convert empty source values to None."""
+    def _clean_value(value: str | None) -> str | None:
+        """Normalize CSV values."""
         if value is None:
             return None
 
-        value = str(value).strip()
-
+        value = value.strip()
         return value or None
 
     @staticmethod
@@ -87,15 +87,13 @@ class ReturnItemRawIngestor:
     ) -> str:
         """Generate a deterministic hash for a source row."""
 
-        normalized_values = [
-            str(value).strip()
-            for key, value in sorted(row.items())
-        ]
-
-        payload = "|".join(normalized_values)
+        normalized_row = "|".join(
+            f"{key}={row.get(key, '')}"
+            for key in sorted(row.keys())
+        )
 
         return hashlib.sha256(
-            payload.encode("utf-8")
+            normalized_row.encode("utf-8")
         ).hexdigest()
 
     def _record_exists(
@@ -109,9 +107,9 @@ class ReturnItemRawIngestor:
                 """
                 SELECT EXISTS (
                     SELECT 1
-                    FROM raw.return_items
+                    FROM raw.cash_accounts
                     WHERE source_row_hash = :source_row_hash
-                )
+                );
                 """
             ),
             {
@@ -122,9 +120,7 @@ class ReturnItemRawIngestor:
         return bool(result.scalar())
 
     def ingest(self) -> dict[str, Any]:
-        """
-        Execute raw ingestion from CSV into raw.return_items.
-        """
+        """Read and ingest previously unseen cash account records."""
 
         if not self.csv_path.exists():
             raise FileNotFoundError(
@@ -143,7 +139,7 @@ class ReturnItemRawIngestor:
         records_rejected = 0
 
         logger.info(
-            "Started return item raw ingestion. Batch ID: %s",
+            "Started cash account raw ingestion. Batch ID: %s",
             batch_id,
         )
 
@@ -152,9 +148,8 @@ class ReturnItemRawIngestor:
                 mode="r",
                 encoding="utf-8-sig",
                 newline="",
-            ) as csv_file:
-
-                reader = csv.DictReader(csv_file)
+            ) as file:
+                reader = csv.DictReader(file)
 
                 for row_number, row in enumerate(
                     reader,
@@ -163,8 +158,35 @@ class ReturnItemRawIngestor:
                     records_received += 1
 
                     try:
+                        cash_account_record = {
+                            "cash_account_id": self._clean_value(
+                                row.get("Cash_Account_ID")
+                            ),
+                            "account_name": self._clean_value(
+                                row.get("Account_Name")
+                            ),
+                            "account_type": self._clean_value(
+                                row.get("Account_Type")
+                            ),
+                            "owner_id": self._clean_value(
+                                row.get("Owner_ID")
+                            ),
+                            "active": self._clean_value(
+                                row.get("Active")
+                            ),
+                            "total_in": self._clean_value(
+                                row.get("Total_In")
+                            ),
+                            "total_out": self._clean_value(
+                                row.get("Total_Out")
+                            ),
+                            "current_balance": self._clean_value(
+                                row.get("Current_Balance")
+                            ),
+                        }
+
                         source_row_hash = self._generate_row_hash(
-                            row
+                            cash_account_record
                         )
 
                         if self._record_exists(source_row_hash):
@@ -174,24 +196,7 @@ class ReturnItemRawIngestor:
                             "ingestion_batch_id": batch_id,
                             "source_row_number": row_number,
                             "source_row_hash": source_row_hash,
-                            "return_item_id": self._clean_value(
-                                row.get("Return_Item_ID")
-                            ),
-                            "return_id": self._clean_value(
-                                row.get("Return_ID")
-                            ),
-                            "product_id": self._clean_value(
-                                row.get("Product_ID")
-                            ),
-                            "quantity": self._clean_value(
-                                row.get("Quantity")
-                            ),
-                            "unit_price": self._clean_value(
-                                row.get("Unit_Price")
-                            ),
-                            "line_amount": self._clean_value(
-                                row.get("Line_Amount")
-                            ),
+                            **cash_account_record,
                         }
 
                         self.session.execute(
@@ -205,7 +210,7 @@ class ReturnItemRawIngestor:
                         records_rejected += 1
 
                         logger.exception(
-                            "Failed to ingest return item row %s.",
+                            "Failed to ingest cash account row %s.",
                             row_number,
                         )
 
@@ -218,7 +223,7 @@ class ReturnItemRawIngestor:
             )
 
             logger.info(
-                "Return item raw ingestion completed. "
+                "Cash account raw ingestion completed. "
                 "Batch ID: %s, Received: %s, Loaded: %s, "
                 "Rejected: %s",
                 batch_id,
@@ -236,7 +241,7 @@ class ReturnItemRawIngestor:
 
         except Exception as exc:
             logger.exception(
-                "Return item raw ingestion failed. "
+                "Cash account raw ingestion failed. "
                 "Batch ID: %s",
                 batch_id,
             )
