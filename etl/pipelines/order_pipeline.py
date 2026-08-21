@@ -59,6 +59,7 @@ class OrderPipeline:
     SOURCE_SYSTEM = "HBMS"
     SOURCE_TYPE = "postgresql"
     SOURCE_REFERENCE = "raw.orders"
+    SOURCE_TABLE = "orders"
 
     INSERT_ERROR_SQL = text(
         """
