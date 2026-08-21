@@ -197,7 +197,7 @@ class ProductPipeline:
             with session_scope() as session:
                 mark_batch_completed(
                     session,
-                    ingestion_batch_id=batch_id,
+                    ingestion_batch_id=batch_id, # type: ignore
                     records_received=records_received,
                     records_loaded=records_loaded,
                     records_rejected=records_rejected,
@@ -226,7 +226,7 @@ class ProductPipeline:
                     with session_scope() as session:
                         mark_batch_failed(
                             session,
-                            ingestion_batch_id=batch_id,
+                            ingestion_batch_id=batch_id, # type: ignore
                             error_message=str(exc),
                             records_received=records_received,
                             records_loaded=records_loaded,
