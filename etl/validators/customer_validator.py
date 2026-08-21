@@ -11,8 +11,11 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
+from etl.models.validation import ValidationResult
+from etl.validators.base import BaseValidator
 
-class CustomerValidator:
+
+class CustomerValidator(BaseValidator):
     """
     Validate customer records against staging business requirements.
     """
@@ -22,13 +25,12 @@ class CustomerValidator:
         "customer_name",
     )
 
-    def validate(self, record: dict[str, Any]) -> list[str]:
+    def validate(
+        self,
+        record: dict[str, Any],
+    ) -> ValidationResult:
         """
         Validate a single transformed customer record.
-
-        Returns:
-            A list of validation error messages.
-            An empty list means the record is valid.
         """
         errors: list[str] = []
 
@@ -37,22 +39,14 @@ class CustomerValidator:
         self._validate_numeric_fields(record, errors)
         self._validate_non_negative_values(record, errors)
 
-        return errors
-
-    def is_valid(self, record: dict[str, Any]) -> bool:
-        """
-        Return True if the record passes validation.
-        """
-        return not self.validate(record)
+        return ValidationResult(errors=errors)
 
     @staticmethod
     def _validate_required_fields(
         record: dict[str, Any],
         errors: list[str],
     ) -> None:
-        """
-        Validate mandatory staging fields.
-        """
+        """Validate mandatory staging fields."""
         for field in CustomerValidator.REQUIRED_FIELDS:
             value = record.get(field)
 
@@ -64,9 +58,7 @@ class CustomerValidator:
         record: dict[str, Any],
         errors: list[str],
     ) -> None:
-        """
-        Validate customer date fields and their logical ordering.
-        """
+        """Validate customer date fields and their logical ordering."""
         first_order_date = record.get("first_order_date")
         last_order_date = record.get("last_order_date")
 
@@ -100,9 +92,7 @@ class CustomerValidator:
         record: dict[str, Any],
         errors: list[str],
     ) -> None:
-        """
-        Validate expected numeric field types.
-        """
+        """Validate expected numeric field types."""
         total_orders = record.get("total_orders")
 
         if (
@@ -135,19 +125,17 @@ class CustomerValidator:
         record: dict[str, Any],
         errors: list[str],
     ) -> None:
-        """
-        Validate fields that cannot contain negative values.
-        """
+        """Validate fields that cannot contain negative values."""
         total_orders = record.get("total_orders")
 
-        if isinstance(total_orders, int) and not isinstance(
-            total_orders,
-            bool,
+        if (
+            isinstance(total_orders, int)
+            and not isinstance(total_orders, bool)
+            and total_orders < 0
         ):
-            if total_orders < 0:
-                errors.append(
-                    "total_orders cannot be negative."
-                )
+            errors.append(
+                "total_orders cannot be negative."
+            )
 
         monetary_fields = (
             "total_spent",

@@ -36,6 +36,7 @@ from etl.utils.ingestion_batch import (
 )
 from etl.validators.customer_validator import CustomerValidator
 
+from etl.utils.ingestion_error import record_ingestion_error
 
 logger = logging.getLogger(__name__)
 
@@ -132,10 +133,11 @@ class CustomerPipeline:
             valid_records: list[dict[str, Any]] = []
 
             for record in transformed_records:
-                errors = self.validator.validate(record)
+                validation_result = self.validator.validate(record)
 
-                if not errors:
+                if validation_result.is_valid:
                     valid_records.append(record)
+
                 else:
                     records_rejected += 1
 
@@ -143,8 +145,21 @@ class CustomerPipeline:
                         "Customer record rejected. "
                         "Customer ID: %s. Errors: %s",
                         record.get("customer_id"),
-                        errors,
+                        validation_result.errors,
                     )
+
+                    with session_scope() as session:
+                        record_ingestion_error(
+                            session=session,
+                            ingestion_batch_id=batch_id,
+                            source_table="customers",
+                            source_row_identifier=record.get(
+                                "source_row_identifier"
+                            ),
+                            error_type="validation_error",
+                            error_message="; ".join(validation_result.errors),
+                            raw_payload=record,
+                        )
 
             logger.info(
                 "Customer validation completed. "
