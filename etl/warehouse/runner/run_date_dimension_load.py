@@ -15,7 +15,7 @@ from etl.warehouse.dimensions.date_dimension_loader import (
 def main() -> None:
     """Populate core.dim_date for the configured date range."""
 
-    start_date = date(2020, 1, 1)
+    start_date = date(2026, 8, 1)
     end_date = date(2035, 12, 31)
 
     with session_scope() as session:
