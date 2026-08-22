@@ -155,7 +155,7 @@ class TestTimeFiltering(unittest.TestCase):
         }
         for grain, unit in expected_unit.items():
             with self.subTest(grain=grain):
-                compiled = build_query(QueryRequest(metrics=("gross_sales",), time_grain=grain))
+                compiled = build_query(QueryRequest(metrics=("gross_sales",), time_grain=grain)) # type: ignore
                 self.assertIn(f"date_trunc('{unit}', sale_date)", compiled.sql)
 
     def test_date_trunc_uses_view_specific_primary_date_column(self) -> None:
@@ -167,14 +167,14 @@ class TestTimeFiltering(unittest.TestCase):
         compiled = build_query(
             QueryRequest(
                 metrics=("gross_sales",),
-                date_from=date(2026, 1, 1),
-                date_to=date(2026, 3, 31),
+                date_from=date(2026, 8, 1),
+                date_to=date(2026, 8, 31),
             )
         )
         self.assertIn("sale_date >= %(", compiled.sql)
         self.assertIn("sale_date <= %(", compiled.sql)
-        self.assertIn(date(2026, 1, 1), compiled.params.values())
-        self.assertIn(date(2026, 3, 31), compiled.params.values())
+        self.assertIn(date(2026, 8, 1), compiled.params.values())
+        self.assertIn(date(2026, 8, 31), compiled.params.values())
 
     def test_unsupported_grain_raises_valueerror_at_time_grains_layer(self) -> None:
         # Every registered metric currently supports all 5 grains, so this
@@ -242,8 +242,8 @@ class TestEdgeCases(unittest.TestCase):
             build_query(
                 QueryRequest(
                     metrics=("gross_sales",),
-                    date_from=date(2026, 6, 1),
-                    date_to=date(2026, 1, 1),
+                    date_from=date(2026, 8, 31),
+                    date_to=date(2026, 8, 1),
                 )
             )
 
