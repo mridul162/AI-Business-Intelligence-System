@@ -98,8 +98,17 @@ class TimeRange:
         """True once this range has explicit dates the query layer can
         use directly. A TimeRange can be resolved (start/end present)
         even if it also carries the original preset/label for display
-        purposes."""
-        return self.start is not None or self.end is not None
+        purposes.
+
+        The 'all_time' preset is a special case: it's resolved as
+        soon as it's constructed, since it deliberately carries NO
+        dates (Phase 9.4's time resolver maps it to start=None,
+        end=None, which the Phase 8 query layer already treats as
+        "no date filter" -- see AnalyticalQueryRequest.to_query_request).
+        Without this, 'all_time' -- despite being one of the presets
+        the NL layer is allowed to emit -- would be permanently stuck
+        NOT resolved, since it has no start/end to check for."""
+        return self.start is not None or self.end is not None or self.preset == "all_time"
 
     @classmethod
     def for_preset(cls, preset: str) -> "TimeRange":

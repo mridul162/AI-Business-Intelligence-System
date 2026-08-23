@@ -29,7 +29,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from etl.analytics.metrics.definitions import TimeGrain
 from etl.analytics.query.models import FilterOperator, OrderBy, QueryFilter, QueryRequest
 
 from etl.analytics.schemas.time_range import TimeRange
@@ -229,7 +228,7 @@ class AnalyticalQueryRequest:
         return QueryRequest(
             metrics=self.all_metrics,
             dimensions=self.dimensions,
-            time_grain=self.time_grain,  # type: ignore
+            time_grain=self.time_grain, #type: ignore[assignment]
             filters=tuple(f.to_query_filter() for f in self.filters),
             date_from=date_from,
             date_to=date_to,

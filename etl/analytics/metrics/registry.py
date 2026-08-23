@@ -64,6 +64,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="gross_sales",
+        aliases=("revenue", "sales", "earn", "earnings", "income"),
     ),
 
     "net_sales": MetricDefinition(
@@ -85,6 +86,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="net_sales",
+        aliases=("net revenue", "earn", "earnings", "income"),
     ),
 
     "total_payments": MetricDefinition(
@@ -113,6 +115,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="total_payments",
+        aliases=("collections",),
     ),
 
     "total_returns": MetricDefinition(
@@ -306,6 +309,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="cash_in",
+        aliases=("cash inflow",),
     ),
 
     "cash_out": MetricDefinition(
@@ -333,6 +337,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="cash_out",
+        aliases=("cash outflow",),
     ),
 
     "total_expenses": MetricDefinition(
@@ -511,6 +516,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="gross_business_margin",
+        aliases=("profit", "earn", "earnings", "income"),
     ),
 }
 
