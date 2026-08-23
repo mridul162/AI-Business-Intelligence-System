@@ -55,6 +55,8 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "product_category",
             "location_id",
             "location_name",
+            "collected_by",
+            "payment_method",
         ),
         supported_time_grains=(
             "daily",

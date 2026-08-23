@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from database.connection import session_scope
 from etl.analytics.execution.executor import AnalyticalQueryExecutor
 from etl.analytics.nl_query.parser import CompletionFn, NLQueryParser, ParserConfig
+from etl.analytics.nl_query.providers.openai_provider import create_openai_completion
 from etl.analytics.query import build_query
 from etl.analytics.query.models import CompiledQuery, QueryRequest
 from etl.analytics.response.builder import AnalyticalResponseBuilder
@@ -36,7 +37,7 @@ def get_nl_completion() -> CompletionFn:
     remains intentionally injectable for application/bootstrap code and tests.
     """
 
-    return _completion_not_configured
+    return create_openai_completion()
 
 
 class NaturalLanguageSemanticResolver:

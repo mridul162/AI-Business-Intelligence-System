@@ -1,12 +1,29 @@
 """
-Configuration and settings for the ETL package.
+Application configuration.
 """
 
-class Settings:
-    """Holds ETL configuration values (env vars, connection strings, etc.)."""
+from __future__ import annotations
 
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-settings = Settings()
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+
+    openai_api_key: str = ""
+    nl_query_model: str = "gpt-4.1-mini"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+
+@lru_cache
+def get_settings() -> Settings:
+    """Return cached application settings."""
+
+    return Settings()
