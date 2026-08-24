@@ -1,0 +1,949 @@
+{
+    {
+    "case_id": "EVAL-004",
+    "question": "How much did we receive in payments?",
+    "category": "direct_metric",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-005",
+    "question": "How much cash came in?",
+    "category": "direct_metric",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-006",
+    "question": "How much cash went out?",
+    "category": "direct_metric",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-007",
+    "question": "How much capital was added?",
+    "category": "direct_metric",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-008",
+    "question": "How much capital was withdrawn?",
+    "category": "direct_metric",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-009",
+    "question": "How many orders did we receive?",
+    "category": "direct_metric",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-010",
+    "question": "What are our total payments?",
+    "category": "direct_metric",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-011",
+    "question": "What is our cash in?",
+    "category": "direct_metric",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-012",
+    "question": "What is our cash out?",
+    "category": "direct_metric",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-013",
+    "question": "What did we spend?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-014",
+    "question": "What were our business expenses?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-015",
+    "question": "How much money did the business spend?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-016",
+    "question": "What is our expenditure?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-017",
+    "question": "How much did we earn after returns?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-018",
+    "question": "What was our revenue after customer returns?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-019",
+    "question": "How much did we sell in total?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'total sales'."
+    },
+    {
+    "case_id": "EVAL-020",
+    "question": "What was our total revenue?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-021",
+    "question": "How much money came into the business?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "metric_mismatch"
+    ],
+    "field_diffs": [
+        {
+        "field": "metrics",
+        "expected": [
+            "cash_in"
+        ],
+        "actual": [
+            "gross_sales"
+        ]
+        }
+    ],
+    "actual_failed_stage": null,
+    "expected_failed_stage": null,
+    "error": null
+    },
+    {
+    "case_id": "EVAL-022",
+    "question": "How much money left the business?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-023",
+    "question": "How much did investors put into the company?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-024",
+    "question": "How much money was taken out by owners?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-025",
+    "question": "How many purchases did customers make?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-026",
+    "question": "What did customers pay us in total?",
+    "category": "metric_paraphrase",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-027",
+    "question": "What were our sales today?",
+    "category": "time_based",
+    "difficulty": "easy",
+    "failure_types": [
+        "metric_mismatch"
+    ],
+    "field_diffs": [
+        {
+        "field": "metrics",
+        "expected": [
+            "total_sales"
+        ],
+        "actual": [
+            "gross_sales"
+        ]
+        }
+    ],
+    "actual_failed_stage": null,
+    "expected_failed_stage": null,
+    "error": null
+    },
+    {
+    "case_id": "EVAL-028",
+    "question": "What were our sales yesterday?",
+    "category": "time_based",
+    "difficulty": "easy",
+    "failure_types": [
+        "metric_mismatch"
+    ],
+    "field_diffs": [
+        {
+        "field": "metrics",
+        "expected": [
+            "total_sales"
+        ],
+        "actual": [
+            "gross_sales"
+        ]
+        }
+    ],
+    "actual_failed_stage": null,
+    "expected_failed_stage": null,
+    "error": null
+    },
+    {
+    "case_id": "EVAL-032",
+    "question": "What are our expenses this month?",
+    "category": "time_based",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'expenses'."
+    },
+    {
+    "case_id": "EVAL-033",
+    "question": "Show monthly net sales.",
+    "category": "time_based",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-034",
+    "question": "What were our quarterly sales?",
+    "category": "time_based",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-035",
+    "question": "Show total sales by year.",
+    "category": "time_based",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-036",
+    "question": "Show total expenses by day this month.",
+    "category": "time_based",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): dimensions[0]: Could not resolve dimensions[0] value 'day'."
+    },
+    {
+    "case_id": "EVAL-037",
+    "question": "What is our total sales?",
+    "category": "time_based",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-038",
+    "question": "What are our total expenses?",
+    "category": "time_based",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-039",
+    "question": "How much cash came in this quarter?",
+    "category": "time_based",
+    "difficulty": "medium",
+    "failure_types": [
+        "time_grain_mismatch"
+    ],
+    "field_diffs": [
+        {
+        "field": "time_grain",
+        "expected": null,
+        "actual": "quarterly"
+        }
+    ],
+    "actual_failed_stage": null,
+    "expected_failed_stage": null,
+    "error": null
+    },
+    {
+    "case_id": "EVAL-040",
+    "question": "How much capital was added this year?",
+    "category": "time_based",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'capital added'."
+    },
+    {
+    "case_id": "EVAL-042",
+    "question": "What were yesterday's payments?",
+    "category": "time_based",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'payments'."
+    },
+    {
+    "case_id": "EVAL-043",
+    "question": "Show total payments by payment method.",
+    "category": "dimension",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-044",
+    "question": "Break down cash in by payment method.",
+    "category": "dimension",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-045",
+    "question": "Show cash out by payment method.",
+    "category": "dimension",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-046",
+    "question": "Show total expenses by category.",
+    "category": "dimension",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-047",
+    "question": "Break down this month's expenses by category.",
+    "category": "dimension",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'expenses'."
+    },
+    {
+    "case_id": "EVAL-049",
+    "question": "Show net sales by payment method.",
+    "category": "dimension",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "semantic_resolution",
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-050",
+    "question": "Show expenses by month and category.",
+    "category": "dimension",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-051",
+    "question": "Show payments for cash.",
+    "category": "filter",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-052",
+    "question": "Show cash in for card payments.",
+    "category": "filter",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-053",
+    "question": "Show expenses above 1000.",
+    "category": "filter",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-054",
+    "question": "Show expenses under 500 this month.",
+    "category": "filter",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'expenses'."
+    },
+    {
+    "case_id": "EVAL-055",
+    "question": "Show total expenses in the office category.",
+    "category": "filter",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-056",
+    "question": "Show cash payments received this week.",
+    "category": "filter",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'cash payments received'."
+    },
+    {
+    "case_id": "EVAL-057",
+    "question": "Show expenses at least 250 in the travel category.",
+    "category": "filter",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-058",
+    "question": "Show orders from this month.",
+    "category": "filter",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'orders'."
+    },
+    {
+    "case_id": "EVAL-059",
+    "question": "Compare total sales and total expenses.",
+    "category": "multi_metric",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-060",
+    "question": "Show net sales and total payments.",
+    "category": "multi_metric",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-061",
+    "question": "Show cash in and cash out.",
+    "category": "multi_metric",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-062",
+    "question": "How much capital was added and withdrawn?",
+    "category": "multi_metric",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-063",
+    "question": "Compare total sales and net sales this month.",
+    "category": "multi_metric",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'total sales'."
+    },
+    {
+    "case_id": "EVAL-064",
+    "question": "Show total expenses and total payments last month.",
+    "category": "multi_metric",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "query_building",
+    "expected_failed_stage": null,
+    "error": "All metrics in one query must share the same source_view. Got: ['analytics.v_expenses', 'analytics.v_payments']. Split this into separate queries, one per view."
+    },
+    {
+    "case_id": "EVAL-065",
+    "question": "Compare cash in, cash out, and total expenses.",
+    "category": "multi_metric",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-066",
+    "question": "Show monthly total sales and total expenses.",
+    "category": "multi_metric",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-067",
+    "question": "Compare capital added this year to capital withdrawn this year.",
+    "category": "multi_metric",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (2 issue(s)): metric: Could not resolve metric value 'capital added'.; additional_metrics[0]: Could not resolve additional_metrics[0] value 'capital withdrawn'."
+    },
+    {
+    "case_id": "EVAL-068",
+    "question": "Show orders and total payments today.",
+    "category": "multi_metric",
+    "difficulty": "medium",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": null,
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'orders'."
+    },
+    {
+    "case_id": "EVAL-069",
+    "question": "How is the business doing?",
+    "category": "ambiguous_invalid",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "parser",
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'business_performance'."
+    },
+    {
+    "case_id": "EVAL-070",
+    "question": "Show me everything.",
+    "category": "ambiguous_invalid",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "parser",
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-071",
+    "question": "What will our sales be next month?",
+    "category": "ambiguous_invalid",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "time_resolution",
+    "error": "Semantic resolution failed (1 issue(s)): time_range: Time range label 'next month' can't be resolved deterministically. Phase 9.4's time resolver only understands known presets (['all_time', 'current_month', 'current_quarter', 'current_week', 'current_year', 'last_30_days', 'last_7_days', 'last_90_days', 'last_month', 'last_quarter', 'last_week', 'last_year', 'month_to_date', 'today', 'year_to_date', 'yesterday']); free-text labels need a smarter date parser upstream before reaching this resolver."
+    },
+    {
+    "case_id": "EVAL-072",
+    "question": "Give me profit by customer satisfaction.",
+    "category": "ambiguous_invalid",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "semantic_resolution",
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-073",
+    "question": "What's our best marketing channel?",
+    "category": "ambiguous_invalid",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "semantic_resolution",
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-074",
+    "question": "Why did expenses go up?",
+    "category": "ambiguous_invalid",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "parser",
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-075",
+    "question": "Should we cut costs next quarter?",
+    "category": "ambiguous_invalid",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "parser",
+    "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'costs'."
+    },
+    {
+    "case_id": "EVAL-076",
+    "question": "Show sales by employee performance rating.",
+    "category": "ambiguous_invalid",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "semantic_resolution",
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-077",
+    "question": "asdkjaslkdj sales??",
+    "category": "ambiguous_invalid",
+    "difficulty": "hard",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "parser",
+    "error": "time_range: TimeRange must specify at least one of: preset, label, start, or end."
+    },
+    {
+    "case_id": "EVAL-078",
+    "question": "",
+    "category": "ambiguous_invalid",
+    "difficulty": "easy",
+    "failure_types": [
+        "pipeline_failure"
+    ],
+    "field_diffs": [],
+    "actual_failed_stage": "semantic_resolution",
+    "expected_failed_stage": "parser",
+    "error": "question must be a non-empty string."
+    }
+  ]
+}

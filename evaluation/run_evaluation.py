@@ -8,9 +8,11 @@ Usage:
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 from database.connection import session_scope
+from evaluation.analysis.failure_analyzer import analyze_failures
 from evaluation.loaders.dataset_loader import load_evaluation_dataset
 from evaluation.reports.evaluation_report import build_evaluation_report
 from evaluation.runners.evaluation_runner import EvaluationRunner
@@ -77,6 +79,31 @@ def main() -> None:
             default=str,
         )
     )
+
+    failure_analysis = analyze_failures(results)
+
+    print("\n" + "=" * 70)
+    print("FAILURE ANALYSIS")
+    print("=" * 70)
+
+    if failure_analysis.failed_results == 0:
+        print("\nNo failures to analyze — every case passed.")
+    else:
+        print(
+            json.dumps(
+                {
+                    "total_results": failure_analysis.total_results,
+                    "failed_results": failure_analysis.failed_results,
+                    "failure_counts": failure_analysis.failure_counts,
+                    "failures": [
+                        asdict(detail)
+                        for detail in failure_analysis.failures
+                    ],
+                },
+                indent=2,
+                default=str,
+            )
+        )
 
     print("\n" + "=" * 70)
     print("EVALUATION COMPLETE")
