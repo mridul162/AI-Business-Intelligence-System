@@ -66,7 +66,10 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="gross_sales",
-        aliases=("revenue", "sales", "earn", "earnings", "income"),
+        aliases=(
+            "revenue", "sales", "total sales", "sales amount",
+            "earn", "earnings", "income",
+        ),
     ),
 
     "net_sales": MetricDefinition(
@@ -117,7 +120,13 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="total_payments",
-        aliases=("collections",),
+        # ADDED: "payments" / "payment received" / "money received" /
+        # "amount received" were failing to resolve (mentor report,
+        # section 2) because only "collections" was registered.
+        aliases=(
+            "collections", "payments", "payment received",
+            "money received", "amount received",
+        ),
     ),
 
     "total_returns": MetricDefinition(
@@ -311,7 +320,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="cash_in",
-        aliases=("cash inflow",),
+        aliases=("cash inflow", "cash in", "money coming in", "cash received"),
     ),
 
     "cash_out": MetricDefinition(
@@ -339,7 +348,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="cash_out",
-        aliases=("cash outflow",),
+        aliases=("cash outflow", "cash out", "money going out", "cash spent"),
     ),
 
     "total_expenses": MetricDefinition(
@@ -366,6 +375,15 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="total_expenses",
+        # ADDED: this metric previously had NO aliases at all, which
+        # is the direct cause of the "spend" / "business_expenses" /
+        # "money_spent" / "expenses" failures in the mentor's report
+        # (section 1 & 2) -- the LLM had nothing canonical to map to
+        # and invented its own identifiers instead.
+        aliases=(
+            "expenses", "business expenses", "spending", "money spent",
+            "what did we spend", "total spent",
+        ),
     ),
 
     "partner_capital_in": MetricDefinition(

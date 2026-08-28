@@ -62,9 +62,12 @@ def main() -> None:
 
             results = runner.run_cases(cases)
 
-    except Exception as exc:
-        print(f"\nEvaluation execution failed: {exc}")
-        raise SystemExit(1) from exc
+    except Exception:
+        import traceback
+
+        print("\nEvaluation execution failed:\n")
+        traceback.print_exc()
+        raise SystemExit(1)
 
     report = build_evaluation_report(results)
 

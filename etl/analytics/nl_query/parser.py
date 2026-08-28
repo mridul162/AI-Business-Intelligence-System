@@ -107,22 +107,48 @@ def _parse_date(value: Any, *, field_name: str) -> Optional[date]:
 
 
 def _time_range_from_json(data: Any) -> Optional[TimeRange]:
+    """Convert an optional JSON time_range object into TimeRange."""
+
     if data is None:
         return None
-    if not isinstance(data, dict):
-        raise LLMResponseValidationError(f"time_range must be a JSON object, got {data!r}.")
 
-    start = _parse_date(data.get("start"), field_name="time_range.start")
-    end = _parse_date(data.get("end"), field_name="time_range.end")
+    if not isinstance(data, dict):
+        raise LLMResponseValidationError(
+            f"time_range must be a JSON object, got {data!r}."
+        )
+
+    preset = data.get("preset")
+    label = data.get("label")
+    start = _parse_date(
+        data.get("start"),
+        field_name="time_range.start",
+    )
+    end = _parse_date(
+        data.get("end"),
+        field_name="time_range.end",
+    )
+
+    # Treat an omitted, empty, or fully-null time range as no time range.
+    if (
+        preset is None
+        and label is None
+        and start is None
+        and end is None
+    ):
+        return None
+
     try:
         return TimeRange(
-            preset=data.get("preset"),
-            label=data.get("label"),
+            preset=preset,
+            label=label,
             start=start,
             end=end,
         )
+
     except ValueError as exc:
-        raise LLMResponseValidationError(f"time_range: {exc}") from exc
+        raise LLMResponseValidationError(
+            f"time_range: {exc}"
+        ) from exc
 
 
 def _filters_from_json(data: Any) -> tuple[FilterCondition, ...]:

@@ -127,7 +127,7 @@ def test_load_evaluation_dataset_raises_for_invalid_json(
 # -------------------------------------------------------------------
 
 
-def test_load_evaluation_dataset_raises_when_top_level_is_not_array(
+def test_load_evaluation_dataset_raises_when_dataset_object_has_no_cases(
     tmp_path,
 ) -> None:
     dataset_path = tmp_path / "analytics_eval_v1.json"
@@ -139,7 +139,7 @@ def test_load_evaluation_dataset_raises_when_top_level_is_not_array(
 
     with pytest.raises(
         DatasetLoadError,
-        match="JSON array",
+        match="must contain a 'cases' array",
     ):
         load_evaluation_dataset(dataset_path)
 

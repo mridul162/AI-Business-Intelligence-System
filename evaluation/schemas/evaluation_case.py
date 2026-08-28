@@ -128,7 +128,8 @@ class ExpectedOutput:
 # Top-level evaluation case
 # --------------------------------------------------------------------------- #
 
-@dataclass
+from pydantic import BaseModel
+
 class EvaluationCase(BaseModel):
     id: str
     question: str
@@ -136,17 +137,10 @@ class EvaluationCase(BaseModel):
     difficulty: Difficulty
     expected_status: ExpectedStatus
 
-    # Populated when expected_status == SUCCESS.
-    expected: Optional[ExpectedOutput] = None
-
-    # Populated when expected_status == FAILURE. Describes the stage the
-    # question *should* fail at, and the reason a well-behaved system
-    # should reject it there rather than guessing an answer.
-    expected_failed_stage: Optional[FailureStage] = None
-    failure_reason: Optional[str] = None
-
-    # Freeform annotation, e.g. "regression case for expenses->orders bug".
-    notes: Optional[str] = None
+    expected: ExpectedOutput | None = None
+    expected_failed_stage: FailureStage | None = None
+    failure_reason: str | None = None
+    notes: str | None = None
 
     def __post_init__(self) -> None:
         if self.expected_status == ExpectedStatus.SUCCESS and self.expected is None:

@@ -1,5 +1,5 @@
 """
-Phase 9.2 -- system prompt construction.
+System prompt construction.
 
 Kept separate from parser.py so the prompt text can be read, reviewed,
 and iterated on without touching the plumbing code that calls the LLM
@@ -11,7 +11,7 @@ builds a string.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from typing import Optional, Sequence
 
@@ -26,22 +26,73 @@ from etl.analytics.schemas import (
 @dataclass(frozen=True)
 class MetricHint:
     """One line of grounding context about a metric, shown to the LLM
-    so it can make a plausible guess for `metric`/`additional_metrics`.
+    so it can map user language onto a real, known metric name.
 
-    This is a HINT, not a validated allowlist: the parser never checks
-    the LLM's output against it, and the LLM is free to return a name
-    that isn't in this list (e.g. a business term it maps to a metric
-    not listed here, or gets wrong). Phase 9.3 is still the only place
-    that confirms a `metric` value is real."""
+    `aliases` should be sourced from the metric registry's own
+    `MetricDefinition.aliases` wherever possible, so the prompt and
+    the registry never drift apart -- the registry stays the single
+    source of truth for "what do users call this metric".
+
+    `source_view` is optional grounding about which analytical view
+    the metric is computed from. It lets the prompt tell the LLM
+    which metrics can plausibly be requested together in one query
+    (see the multi-metric rule below). Leave it empty if you don't
+    want to expose this yet.
+
+    This is still a HINT, not a validated allowlist: the parser never
+    checks the LLM's output against it. Phase 9.3 remains the only
+    place that confirms a `metric` value is real. What changed is
+    that the prompt now tells the LLM to prefer one of these exact
+    names rather than inventing its own."""
 
     name: str
     description: str = ""
+    aliases: Sequence[str] = field(default_factory=tuple)
+    source_view: str = ""
+
+    @classmethod
+    def from_definition(cls, definition: object) -> "MetricHint":
+        """Build a MetricHint from an etl.analytics.metrics.definitions
+        .MetricDefinition (or anything else with the same four
+        attributes) without this module importing the metrics
+        package.
+
+        This is the one place a MetricDefinition's `description`,
+        `aliases`, and `source_view` get copied into prompt-facing
+        grounding data -- callers should always go through here
+        rather than hand-assembling MetricHint(...) themselves, so
+        the registry stays the single source of truth for both and
+        the two can't drift apart. Deliberately duck-typed (reads
+        attributes rather than importing MetricDefinition) to respect
+        this module's independence from etl.analytics.metrics --
+        see parser.py's module docstring.
+
+        Usage (typically in whatever wires up ParserConfig, e.g. a
+        Phase 9.3 orchestration module):
+
+            from etl.analytics.metrics.registry import list_metrics
+            from etl.analytics.nl_query.prompts import MetricHint
+
+            metric_hints = tuple(
+                MetricHint.from_definition(d) for d in list_metrics()
+            )
+        """
+        return cls(
+            name=definition.name, # type: ignore
+            description=definition.description, # type: ignore
+            aliases=tuple(definition.aliases), # type: ignore
+            source_view=definition.source_view, # type: ignore
+        )
 
 
 _RESPONSE_SCHEMA = """\
-Respond with a single JSON object and nothing else: no prose, no
-markdown code fences, no explanation before or after it. Use this
-shape (omit a key, or use null, when it doesn't apply):
+Respond with exactly one JSON object and nothing else: no prose, no
+markdown code fences, no explanation before or after it.
+
+Use this top-level shape. `metric` is required. All other fields are
+optional; if you include an optional field that does not apply, set it
+to null or an empty array as appropriate. Never use empty placeholder
+objects.
 
 {
   "metric": "<string, REQUIRED>",
@@ -51,17 +102,24 @@ shape (omit a key, or use null, when it doesn't apply):
     {"dimension": "<string>", "operator": "<string>", "value": <any>}
   ],
   "time_grain": "<string or null>",
-  "time_range": {
-    "preset": "<string or null>",
-    "label": "<string or null>",
-    "start": "<YYYY-MM-DD or null>",
-    "end": "<YYYY-MM-DD or null>"
-  },
+  "time_range": null,
   "limit": <integer or null>,
   "sort_by": "<string or null>",
   "sort_order": "<'asc', 'desc', or null>",
   "comparison": {"mode": "<string>"} or null
-}"""
+}
+
+When a genuine time constraint exists, replace `"time_range": null`
+with exactly one of these valid objects:
+
+Relative time:
+{"preset": "<known preset>", "label": null, "start": null, "end": null}
+
+Absolute calendar date or period:
+{"preset": null, "label": null, "start": "<YYYY-MM-DD or null>", "end": "<YYYY-MM-DD or null>"}
+
+Unclear or unsupported time expression:
+{"preset": null, "label": "<short time expression>", "start": null, "end": null}"""
 
 
 def build_system_prompt(
@@ -73,8 +131,8 @@ def build_system_prompt(
     """
     Build the system prompt for one parse() call.
 
-    `metric_hints`/`dimension_hints` are optional grounding context --
-    passing the metric catalog's names/descriptions measurably
+    `metric_hints`/`dimension_hints` are grounding context -- passing
+    the metric catalog's names/descriptions/aliases measurably
     improves the LLM's guesses, but nothing downstream trusts them:
     the parser doesn't check its own output against these lists.
 
@@ -105,8 +163,7 @@ def build_system_prompt(
     )
     lines.append(
         "Known time_range.preset values (use exactly one, for "
-        "RELATIVE time language like 'this month', 'last week', "
-        "'today', 'last 30 days'): " + ", ".join(sorted(KNOWN_PRESETS))
+        "RELATIVE time language): " + ", ".join(sorted(KNOWN_PRESETS))
     )
     lines.append(
         "Known filter operator values: " + ", ".join(sorted(KNOWN_FILTER_OPERATORS))
@@ -116,36 +173,132 @@ def build_system_prompt(
     )
     lines.append("")
 
+    lines.append("Time range decision rules:")
     lines.append(
-        "Time range rule: if the question names an ABSOLUTE, "
-        "unambiguous calendar period (a specific month + year, a "
-        "specific date, a specific quarter + year), compute and "
-        "return explicit time_range.start / time_range.end dates "
-        "yourself. If the question uses RELATIVE language whose "
-        "meaning depends on today's date ('this month', 'last week', "
-        "'yesterday', 'last 30 days'), return the matching "
-        "time_range.preset instead and leave start/end null -- do "
-        "not guess actual dates for relative language."
+        "1. No time constraint: if the user did not express any temporal "
+        "meaning, set `time_range` to null or omit it. Do not invent a "
+        "default period such as today, current month, or all time."
     )
     lines.append(
-        "If a time expression doesn't map to a known preset and "
-        "isn't an absolute period you can compute with confidence, "
-        "put your best short description of it in time_range.label "
-        "and leave start/end null."
+        "2. Time grain only: phrases like 'by day', 'by week', or 'by "
+        "month' set `time_grain`; they are not a time range by themselves."
+    )
+    lines.append(
+        "3. Relative time: for 'today', 'yesterday', 'this week', 'last "
+        "week', 'this month', 'last month', 'this quarter', 'this year', "
+        "'last 30 days', etc., use the matching known preset. Map 'this "
+        "week/month/quarter/year' to current_week/current_month/"
+        "current_quarter/current_year. Do not compute start/end dates for "
+        "relative language."
+    )
+    lines.append(
+        "4. Absolute time: for an unambiguous calendar date or period "
+        "such as '2026-08-15', 'January 2026', or 'Q1 2026', return "
+        "explicit ISO start/end dates and keep preset and label null."
+    )
+    lines.append(
+        "5. Unclear time: use `time_range.label` only when the question "
+        "contains a real time expression that you cannot confidently map "
+        "to a known preset or explicit dates."
+    )
+    lines.append(
+        "Never return `{}` for `time_range`. Never return a `time_range` "
+        "object where preset, label, start, and end are all null."
+    )
+    lines.append("")
+
+    lines.append("Examples:")
+    lines.append(
+        'Question: "What are our total expenses?"'
+    )
+    lines.append(
+        '{"metric": "total_expenses", "additional_metrics": [], '
+        '"dimensions": [], "filters": [], "time_grain": null, '
+        '"time_range": null, "limit": null, "sort_by": null, '
+        '"sort_order": null, "comparison": null}'
+    )
+    lines.append("")
+    lines.append(
+        'Question: "What were our net sales last month?"'
+    )
+    lines.append(
+        '{"metric": "net_sales", "additional_metrics": [], '
+        '"dimensions": [], "filters": [], "time_grain": null, '
+        '"time_range": {"preset": "last_month", "label": null, '
+        '"start": null, "end": null}, "limit": null, '
+        '"sort_by": null, "sort_order": null, "comparison": null}'
+    )
+    lines.append("")
+    lines.append(
+        'Question: "What were our net sales in January 2026?"'
+    )
+    lines.append(
+        '{"metric": "net_sales", "additional_metrics": [], '
+        '"dimensions": [], "filters": [], "time_grain": null, '
+        '"time_range": {"preset": null, "label": null, '
+        '"start": "2026-01-01", "end": "2026-01-31"}, '
+        '"limit": null, "sort_by": null, '
+        '"sort_order": null, "comparison": null}'
     )
     lines.append("")
 
     if metric_hints:
         lines.append(
-            "Metrics you can choose `metric` / `additional_metrics` "
-            "from (best guess only -- if nothing fits well, still "
-            "return your best guess; it will be checked separately):"
+            "Metric selection rule: when the user's question corresponds "
+            "to one of the known metrics below, return the EXACT "
+            "canonical metric name shown below. Do not invent new metric "
+            "identifiers, variations, database column names, or "
+            "snake_case versions of the user's own words. For example, "
+            "if the user asks for 'sales', 'total sales', or 'sales "
+            "amount', select the known metric that represents sales, "
+            "using its canonical name -- not a name you construct "
+            "yourself."
         )
+        lines.append("")
+
+        # Group hints by source_view when that information is available,
+        # so the LLM can see which metrics live together and can be
+        # requested in the same query (see the multi-metric rule below).
+        grouped: dict[str, list[MetricHint]] = {}
+        ungrouped: list[MetricHint] = []
         for hint in metric_hints:
-            if hint.description:
-                lines.append(f"  - {hint.name}: {hint.description}")
+            if hint.source_view:
+                grouped.setdefault(hint.source_view, []).append(hint)
             else:
-                lines.append(f"  - {hint.name}")
+                ungrouped.append(hint)
+
+        def _append_hint_lines(hint: MetricHint) -> None:
+            lines.append(f"  - {hint.name}")
+            if hint.description:
+                lines.append(f"    Meaning: {hint.description}")
+            if hint.aliases:
+                lines.append(
+                    "    User phrases: " + ", ".join(hint.aliases)
+                )
+
+        if grouped:
+            lines.append(
+                "Available canonical metrics. Select `metric` and "
+                "`additional_metrics` ONLY from these names when a "
+                "matching metric exists, grouped by the analytical "
+                "source each metric comes from:"
+            )
+            for source_view, hints in grouped.items():
+                lines.append(f"  Source: {source_view}")
+                for hint in hints:
+                    _append_hint_lines(hint)
+            if ungrouped:
+                lines.append("  Source: (unspecified)")
+                for hint in ungrouped:
+                    _append_hint_lines(hint)
+        else:
+            lines.append(
+                "Available canonical metrics. Select `metric` and "
+                "`additional_metrics` ONLY from these names when a "
+                "matching metric exists:"
+            )
+            for hint in metric_hints:
+                _append_hint_lines(hint)
         lines.append("")
 
     if dimension_hints:
@@ -154,13 +307,17 @@ def build_system_prompt(
         lines.append("")
 
     lines.append(
-        "If the question asks about more than one metric that "
-        "plausibly share one underlying query (e.g. 'sales and "
-        "payments'), put the primary one in `metric` and the rest in "
-        "`additional_metrics`. If the metrics clearly come from "
-        "different parts of the business (e.g. 'sales vs expenses'), "
-        "just return the single metric matching the main intent -- "
-        "the caller can ask again for the other one."
+        "Multi-metric rule: use `additional_metrics` only when the "
+        "requested metrics can plausibly be retrieved from the same "
+        "analytical source. If metric grouping by source is shown "
+        "above, only combine metrics listed under the SAME source. Do "
+        "not combine unrelated metrics into one request merely because "
+        "the user mentions both -- if the metrics clearly come from "
+        "different parts of the business (e.g. 'sales vs expenses', or "
+        "metrics under different sources above), just return the "
+        "single metric matching the main intent in `metric` and leave "
+        "`additional_metrics` empty; the caller can ask again for the "
+        "other one."
     )
     lines.append("")
     lines.append(
