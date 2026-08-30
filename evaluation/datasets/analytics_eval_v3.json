@@ -1,6 +1,6 @@
 {
-  "version": "v1",
-  "count": 78,
+  "version": "v3",
+  "count": 102,
   "cases": [
     {
       "id": "EVAL-001",
@@ -57,7 +57,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: registry has no 'total_sales' metric id. 'total sales' is a registered alias of gross_sales."
     },
     {
       "id": "EVAL-004",
@@ -124,7 +124,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "partner_capital_in"
+          "capital_invested"
         ],
         "dimensions": [],
         "filters": [],
@@ -152,7 +152,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: registry has no 'capital_withdrawn' metric id; correct id is capital_withdrawn."
     },
     {
       "id": "EVAL-009",
@@ -352,7 +352,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -361,7 +361,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: 'total_sales' is not a registry metric id; resolves to gross_sales."
     },
     {
       "id": "EVAL-020",
@@ -371,7 +371,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -380,7 +380,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: was mapped to nonexistent 'total_sales'; 'revenue' is a registered gross_sales alias."
     },
     {
       "id": "EVAL-021",
@@ -428,7 +428,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "capital_added"
+          "capital_invested"
         ],
         "dimensions": [],
         "filters": [],
@@ -441,7 +441,7 @@
     },
     {
       "id": "EVAL-024",
-      "question": "How much money was taken out by owners?",
+      "question": "How much money was withdrawn?",
       "category": "metric_paraphrase",
       "difficulty": "medium",
       "expected_status": "success",
@@ -456,17 +456,17 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: nonexistent 'capital_withdrawn' id replaced with capital_withdrawn."
     },
     {
       "id": "EVAL-025",
-      "question": "How many purchases did customers make?",
+      "question": "How many orders did customers make?",
       "category": "metric_paraphrase",
       "difficulty": "medium",
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "orders_count"
+          "number_of_orders"
         ],
         "dimensions": [],
         "filters": [],
@@ -475,7 +475,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: nonexistent 'orders_count' id replaced with number_of_orders. 'Customers making purchases' is customer-order intent, distinct from EVAL-092 (supplier purchase_transactions)."
     },
     {
       "id": "EVAL-026",
@@ -504,7 +504,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -513,7 +513,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: 'total_sales' -> gross_sales."
     },
     {
       "id": "EVAL-028",
@@ -523,7 +523,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -532,7 +532,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: 'total_sales' -> gross_sales."
     },
     {
       "id": "EVAL-029",
@@ -637,7 +637,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -646,7 +646,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: 'total_sales' -> gross_sales."
     },
     {
       "id": "EVAL-035",
@@ -656,7 +656,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -665,11 +665,11 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: 'total_sales' -> gross_sales."
     },
     {
       "id": "EVAL-036",
-      "question": "Show total expenses by day this month.",
+      "question": "Show total daily expenses this month.",
       "category": "time_based",
       "difficulty": "medium",
       "expected_status": "success",
@@ -694,7 +694,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -703,7 +703,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": "No time specified -- must resolve to time_range=None, not an empty {} object."
+      "notes": "No time specified -- must resolve to time_range=None, not an empty {} object. FIXED metric id."
     },
     {
       "id": "EVAL-038",
@@ -751,7 +751,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "capital_added"
+          "capital_invested"
         ],
         "dimensions": [],
         "filters": [],
@@ -760,7 +760,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: 'capital_added' -> capital_invested."
     },
     {
       "id": "EVAL-041",
@@ -823,7 +823,7 @@
     },
     {
       "id": "EVAL-044",
-      "question": "Break down cash in by payment method.",
+      "question": "Break down cash in by transaction type.",
       "category": "dimension",
       "difficulty": "medium",
       "expected_status": "success",
@@ -832,7 +832,7 @@
           "cash_in"
         ],
         "dimensions": [
-          "payment_method"
+          "transaction_type"
         ],
         "filters": [],
         "time_grain": null,
@@ -840,11 +840,11 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: cash_in does not support a payment_method dimension in the registry (only cash_account_id/name and transaction_type). Rewritten to use a supported dimension."
     },
     {
       "id": "EVAL-045",
-      "question": "Show cash out by payment method.",
+      "question": "Show cash out by transaction type.",
       "category": "dimension",
       "difficulty": "medium",
       "expected_status": "success",
@@ -853,7 +853,7 @@
           "cash_out"
         ],
         "dimensions": [
-          "payment_method"
+          "transaction_type"
         ],
         "filters": [],
         "time_grain": null,
@@ -861,11 +861,11 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: same reasoning as EVAL-044; cash_out has no payment_method dimension."
     },
     {
       "id": "EVAL-046",
-      "question": "Show total expenses by category.",
+      "question": "Show total expenses by expense category.",
       "category": "dimension",
       "difficulty": "medium",
       "expected_status": "success",
@@ -874,7 +874,7 @@
           "total_expenses"
         ],
         "dimensions": [
-          "category"
+          "expense_category"
         ],
         "filters": [],
         "time_grain": null,
@@ -882,11 +882,11 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: registry column is 'expense_category', not 'category'."
     },
     {
       "id": "EVAL-047",
-      "question": "Break down this month's expenses by category.",
+      "question": "Break down this month's expenses by expense category.",
       "category": "dimension",
       "difficulty": "medium",
       "expected_status": "success",
@@ -895,7 +895,7 @@
           "total_expenses"
         ],
         "dimensions": [
-          "category"
+          "expense_category"
         ],
         "filters": [],
         "time_grain": null,
@@ -903,7 +903,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: 'category' -> 'expense_category'."
     },
     {
       "id": "EVAL-048",
@@ -934,12 +934,12 @@
       "expected_status": "failure",
       "expected": null,
       "expected_failed_stage": "semantic_resolution",
-      "failure_reason": "net_sales does not support the payment_method dimension in the registry.",
+      "failure_reason": "net_sales does not support the payment_method dimension in the registry (it supports no dimensions at all).",
       "notes": "Intentionally invalid combination -- tests correct rejection, not just correct answers."
     },
     {
       "id": "EVAL-050",
-      "question": "Show expenses by month and category.",
+      "question": "Show monthly expenses grouped by expense category.",
       "category": "dimension",
       "difficulty": "hard",
       "expected_status": "success",
@@ -948,7 +948,7 @@
           "total_expenses"
         ],
         "dimensions": [
-          "category"
+          "expense_category"
         ],
         "filters": [],
         "time_grain": "monthly",
@@ -956,7 +956,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: 'category' -> 'expense_category'."
     },
     {
       "id": "EVAL-051",
@@ -985,13 +985,13 @@
     },
     {
       "id": "EVAL-052",
-      "question": "Show cash in for card payments.",
+      "question": "Show gross sales for card payments.",
       "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "cash_in"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [
@@ -1006,11 +1006,11 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: original case filtered cash_in by payment_method, which cash_in does not support. Replaced with gross_sales, which does support a payment_method dimension/filter."
     },
     {
       "id": "EVAL-053",
-      "question": "Show expenses above 1000.",
+      "question": "Show expenses where amount is above 1000.",
       "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
@@ -1035,7 +1035,7 @@
     },
     {
       "id": "EVAL-054",
-      "question": "Show expenses under 500 this month.",
+      "question": "Show expenses amount is under 500 this month.",
       "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
@@ -1060,7 +1060,7 @@
     },
     {
       "id": "EVAL-055",
-      "question": "Show total expenses in the office category.",
+      "question": "Show total expenses in the rent expense category.",
       "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
@@ -1071,9 +1071,9 @@
         "dimensions": [],
         "filters": [
           {
-            "field": "category",
+            "field": "expense_category",
             "operator": "=",
-            "value": "office"
+            "value": "rent"
           }
         ],
         "time_grain": null,
@@ -1081,11 +1081,11 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: filter field 'category' -> 'expense_category'."
     },
     {
       "id": "EVAL-056",
-      "question": "Show cash payments received this week.",
+      "question": "Show payments by cash this week.",
       "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
@@ -1126,7 +1126,7 @@
             "value": 250
           },
           {
-            "field": "category",
+            "field": "expense_category",
             "operator": "=",
             "value": "travel"
           }
@@ -1136,7 +1136,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "FIXED: filter field 'category' -> 'expense_category'."
     },
     {
       "id": "EVAL-058",
@@ -1146,7 +1146,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "orders_count"
+          "number_of_orders"
         ],
         "dimensions": [],
         "filters": [],
@@ -1155,318 +1155,75 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": "Phrased as a filter but 'from this month' resolves to a time_range, not a filter clause."
+      "notes": "FIXED: nonexistent 'orders_count' id -> number_of_orders. Phrased as a filter but 'from this month' resolves to a time_range, not a filter clause."
     },
     {
-      "id": "EVAL-059",
-      "question": "Compare total sales and total expenses.",
-      "category": "multi_metric",
+      "id": "EVAL-091",
+      "question": "Show gross sales by product category.",
+      "category": "dimension",
       "difficulty": "medium",
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales",
-          "total_expenses"
+          "gross_sales"
         ],
-        "dimensions": [],
+        "dimensions": [
+          "product_category"
+        ],
         "filters": [],
         "time_grain": null,
         "time_range": null
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "NEW: exercises the registry's documented column-name fix (v_sales exposes 'product_category', not 'category'). Also disambiguates from total_expenses's 'expense_category'."
     },
+    
     {
-      "id": "EVAL-060",
-      "question": "Show net sales and total payments.",
-      "category": "multi_metric",
+      "id": "EVAL-093",
+      "question": "Show total returns by return type.",
+      "category": "dimension",
       "difficulty": "medium",
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "net_sales",
-          "total_payments"
+          "total_returns"
         ],
-        "dimensions": [],
+        "dimensions": [
+          "return_type"
+        ],
         "filters": [],
         "time_grain": null,
         "time_range": null
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
+      "notes": "NEW: coverage for total_returns, previously untested and alias-less in the registry."
     },
     {
-      "id": "EVAL-061",
-      "question": "Show cash in and cash out.",
-      "category": "multi_metric",
+      "id": "EVAL-094",
+      "question": "Show returns with status pending.",
+      "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "cash_in",
-          "cash_out"
+          "total_returns"
         ],
         "dimensions": [],
-        "filters": [],
+        "filters": [
+          {
+            "field": "status",
+            "operator": "=",
+            "value": "pending"
+          }
+        ],
         "time_grain": null,
         "time_range": null
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-062",
-      "question": "How much capital was added and withdrawn?",
-      "category": "multi_metric",
-      "difficulty": "medium",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "capital_added",
-          "capital_withdrawn"
-        ],
-        "dimensions": [],
-        "filters": [],
-        "time_grain": null,
-        "time_range": null
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-063",
-      "question": "Compare total sales and net sales this month.",
-      "category": "multi_metric",
-      "difficulty": "medium",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "total_sales",
-          "net_sales"
-        ],
-        "dimensions": [],
-        "filters": [],
-        "time_grain": null,
-        "time_range": "this_month"
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-064",
-      "question": "Show total expenses and total payments last month.",
-      "category": "multi_metric",
-      "difficulty": "medium",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "total_expenses",
-          "total_payments"
-        ],
-        "dimensions": [],
-        "filters": [],
-        "time_grain": null,
-        "time_range": "last_month"
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-065",
-      "question": "Compare cash in, cash out, and total expenses.",
-      "category": "multi_metric",
-      "difficulty": "hard",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "cash_in",
-          "cash_out",
-          "total_expenses"
-        ],
-        "dimensions": [],
-        "filters": [],
-        "time_grain": null,
-        "time_range": null
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-066",
-      "question": "Show monthly total sales and total expenses.",
-      "category": "multi_metric",
-      "difficulty": "hard",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "total_sales",
-          "total_expenses"
-        ],
-        "dimensions": [],
-        "filters": [],
-        "time_grain": "monthly",
-        "time_range": null
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-067",
-      "question": "Compare capital added this year to capital withdrawn this year.",
-      "category": "multi_metric",
-      "difficulty": "hard",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "capital_added",
-          "capital_withdrawn"
-        ],
-        "dimensions": [],
-        "filters": [],
-        "time_grain": null,
-        "time_range": "this_year"
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-068",
-      "question": "Show orders and total payments today.",
-      "category": "multi_metric",
-      "difficulty": "medium",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "orders_count",
-          "total_payments"
-        ],
-        "dimensions": [],
-        "filters": [],
-        "time_grain": null,
-        "time_range": "today"
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-069",
-      "question": "How is the business doing?",
-      "category": "ambiguous_invalid",
-      "difficulty": "hard",
-      "expected_status": "failure",
-      "expected": null,
-      "expected_failed_stage": "parser",
-      "failure_reason": "No extractable metric, dimension, or time expression; too open-ended to parse.",
-      "notes": null
-    },
-    {
-      "id": "EVAL-070",
-      "question": "Show me everything.",
-      "category": "ambiguous_invalid",
-      "difficulty": "hard",
-      "expected_status": "failure",
-      "expected": null,
-      "expected_failed_stage": "parser",
-      "failure_reason": "No specific metric requested; cannot be mapped to a QueryRequest.",
-      "notes": null
-    },
-    {
-      "id": "EVAL-071",
-      "question": "What will our sales be next month?",
-      "category": "ambiguous_invalid",
-      "difficulty": "hard",
-      "expected_status": "failure",
-      "expected": null,
-      "expected_failed_stage": "time_resolution",
-      "failure_reason": "Requests a forecast/future value the system has no capability to produce.",
-      "notes": null
-    },
-    {
-      "id": "EVAL-072",
-      "question": "Give me profit by customer satisfaction.",
-      "category": "ambiguous_invalid",
-      "difficulty": "hard",
-      "expected_status": "failure",
-      "expected": null,
-      "expected_failed_stage": "semantic_resolution",
-      "failure_reason": "'profit' and 'customer satisfaction' are not registered metric/dimension.",
-      "notes": null
-    },
-    {
-      "id": "EVAL-073",
-      "question": "What's our best marketing channel?",
-      "category": "ambiguous_invalid",
-      "difficulty": "hard",
-      "expected_status": "failure",
-      "expected": null,
-      "expected_failed_stage": "semantic_resolution",
-      "failure_reason": "No marketing-channel dimension exists in the current registry.",
-      "notes": null
-    },
-    {
-      "id": "EVAL-074",
-      "question": "Why did expenses go up?",
-      "category": "ambiguous_invalid",
-      "difficulty": "hard",
-      "expected_status": "failure",
-      "expected": null,
-      "expected_failed_stage": "parser",
-      "failure_reason": "Causal/explanatory question; system only supports descriptive metric lookups.",
-      "notes": null
-    },
-    {
-      "id": "EVAL-075",
-      "question": "Should we cut costs next quarter?",
-      "category": "ambiguous_invalid",
-      "difficulty": "hard",
-      "expected_status": "failure",
-      "expected": null,
-      "expected_failed_stage": "parser",
-      "failure_reason": "Advisory/recommendation question, not a metric lookup.",
-      "notes": null
-    },
-    {
-      "id": "EVAL-076",
-      "question": "Show sales by employee performance rating.",
-      "category": "ambiguous_invalid",
-      "difficulty": "hard",
-      "expected_status": "failure",
-      "expected": null,
-      "expected_failed_stage": "semantic_resolution",
-      "failure_reason": "'employee performance rating' is not a registered dimension.",
-      "notes": null
-    },
-    {
-      "id": "EVAL-077",
-      "question": "asdkjaslkdj sales??",
-      "category": "ambiguous_invalid",
-      "difficulty": "hard",
-      "expected_status": "failure",
-      "expected": null,
-      "expected_failed_stage": "parser",
-      "failure_reason": "Malformed / low-signal input; parser should reject rather than guess.",
-      "notes": null
-    },
-    {
-      "id": "EVAL-078",
-      "question": "",
-      "category": "ambiguous_invalid",
-      "difficulty": "easy",
-      "expected_status": "failure",
-      "expected": null,
-      "expected_failed_stage": "parser",
-      "failure_reason": "Empty question; must be rejected before reaching the LLM parser.",
-      "notes": null
+      "notes": "NEW: filter coverage for total_returns using its 'status' dimension."
     }
   ]
 }

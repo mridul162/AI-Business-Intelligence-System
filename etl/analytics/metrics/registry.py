@@ -8,8 +8,8 @@ from etl.analytics.metrics.definitions import MetricDefinition
 
 
 METRIC_REGISTRY: dict[str, MetricDefinition] = {
-    "total_orders": MetricDefinition(
-        name="total_orders",
+    "number_of_orders": MetricDefinition(
+        name="number_of_orders",
         display_name="Total Orders",
         description=(
             "Total number of unique customer orders."
@@ -31,7 +31,11 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "quarterly",
             "yearly",
         ),
-        output_field="total_orders",
+        output_field="number_of_orders",
+        aliases=(
+            "orders received", "orders", "order count", "how many orders",
+            "total orders", "How many purchases"
+        ),
     ),
 
     "gross_sales": MetricDefinition(
@@ -67,8 +71,8 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
         ),
         output_field="gross_sales",
         aliases=(
-            "revenue", "sales", "total sales", "sales amount",
-            "earn", "earnings", "income",
+            "revenue", "total revenue", "sales", "total sales", "sales amount",
+            "earn", "earnings", "gross revenue", "top line",
         ),
     ),
 
@@ -91,7 +95,10 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="net_sales",
-        aliases=("net revenue", "earn", "earnings", "income"),
+        aliases=(
+            "net revenue", "net income", "sales after returns",
+            "final sales", "earn after returns", "revenue after returns", "revenue after customer returns" 
+        ),
     ),
 
     "total_payments": MetricDefinition(
@@ -125,7 +132,8 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
         # section 2) because only "collections" was registered.
         aliases=(
             "collections", "payments", "payment received",
-            "money received", "amount received",
+            "money received", "amount received", "receipts",
+            "customers pay us in total"
         ),
     ),
 
@@ -158,6 +166,10 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="total_returns",
+        aliases=(
+            "returns", "return count", "number of returns",
+            "returned items",
+        ),
     ),
 
     "return_amount": MetricDefinition(
@@ -186,6 +198,10 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="return_amount",
+        aliases=(
+            "refund amount", "total refunds", "value of returns",
+            "returns value",
+        ),
     ),
 
     "cash_refund": MetricDefinition(
@@ -213,6 +229,9 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="cash_refund",
+        aliases=(
+            "cash refunded", "refunded in cash", "cash returned",
+        ),
     ),
 
     "due_adjustment": MetricDefinition(
@@ -239,6 +258,9 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="due_adjustment",
+        aliases=(
+            "due adjusted", "adjusted against dues", "due settlement",
+        ),
     ),
 
     "total_purchases": MetricDefinition(
@@ -267,6 +289,10 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="total_purchases",
+        aliases=(
+            "purchases", "total purchase value", "purchase amount",
+            "procurement spend",
+        ),
     ),
 
     "purchase_transactions": MetricDefinition(
@@ -293,11 +319,14 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="purchase_transactions",
+        aliases=(
+            "purchase count", "number of purchases", "purchases made",
+        ),
     ),
 
-    "cash_in": MetricDefinition(
-        name="cash_in",
-        display_name="Cash In",
+    "cash_inflows": MetricDefinition(
+        name="cash_inflows",
+        display_name="Cash Inflows",
         description=(
             "Total incoming cash transactions."
         ),
@@ -319,13 +348,13 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "quarterly",
             "yearly",
         ),
-        output_field="cash_in",
-        aliases=("cash inflow", "cash in", "money coming in", "cash received"),
+        output_field="cash_inflows",
+        aliases=("cash inflow", "cash in", "money coming in", "cash received", "money came into"),
     ),
 
-    "cash_out": MetricDefinition(
-        name="cash_out",
-        display_name="Cash Out",
+    "cash_outflows": MetricDefinition(
+        name="cash_outflows",
+        display_name="Cash Outflows",
         description=(
             "Total outgoing cash transactions."
         ),
@@ -347,8 +376,10 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "quarterly",
             "yearly",
         ),
-        output_field="cash_out",
-        aliases=("cash outflow", "cash out", "money going out", "cash spent"),
+        output_field="cash_outflows",
+        aliases=(
+            "cash outflow", "cash out", "money going out", "cash spent", "cash disbursed", "money left",
+        ),
     ),
 
     "total_expenses": MetricDefinition(
@@ -366,6 +397,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "cash_account_id",
             "cash_account_name",
             "paid_by",
+            "amount"
         ),
         supported_time_grains=(
             "daily",
@@ -382,13 +414,13 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
         # and invented its own identifiers instead.
         aliases=(
             "expenses", "business expenses", "spending", "money spent",
-            "what did we spend", "total spent",
+            "what did we spend", "total spent", "expenditure"
         ),
     ),
 
-    "partner_capital_in": MetricDefinition(
-        name="partner_capital_in",
-        display_name="Partner Capital In",
+    "capital_invested": MetricDefinition(
+        name="capital_invested",
+        display_name="Capital Invested",
         description=(
             "Total capital contributed by business partners."
         ),
@@ -418,12 +450,17 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "quarterly",
             "yearly",
         ),
-        output_field="partner_capital_in",
+        output_field="capital_invested",
+
+        aliases=(
+            "capital added", "capital contribution", "capital invested",
+            "partner investment", "partners put into", "investors put into"
+        ),
     ),
 
-    "partner_capital_out": MetricDefinition(
-        name="partner_capital_out",
-        display_name="Partner Capital Out",
+    "capital_withdrawn": MetricDefinition(
+        name="capital_withdrawn",
+        display_name="Capital Withdrawn",
         description=(
             "Total capital withdrawn by business partners."
         ),
@@ -450,7 +487,11 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "quarterly",
             "yearly",
         ),
-        output_field="partner_capital_out",
+        output_field="capital_withdrawn",
+        aliases=(
+            "capital withdrawn", "capital withdrawal", "partner withdrawal",
+            "capital taken out", "money withdrawn"
+        ),
     ),
 
     "stock_in_quantity": MetricDefinition(
@@ -482,6 +523,10 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="stock_in_quantity",
+        aliases=(
+            "stock in", "inventory received", "stock received",
+            "goods received",
+        ),
     ),
 
     "stock_out_quantity": MetricDefinition(
@@ -513,6 +558,10 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="stock_out_quantity",
+        aliases=(
+            "stock out", "inventory issued", "stock issued",
+            "goods issued",
+        ),
     ),
 
     "gross_business_margin": MetricDefinition(
@@ -536,7 +585,11 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "yearly",
         ),
         output_field="gross_business_margin",
-        aliases=("profit", "earn", "earnings", "income"),
+        # FIXED: "income" was also registered under net_sales, causing
+        # an alias collision between two different metrics. Removed
+        # here and replaced with margin-specific terms so "income"
+        # unambiguously maps to net_sales.
+        aliases=("profit", "margin", "business margin", "gross margin"),
     ),
 }
 

@@ -1,0 +1,701 @@
+{
+  "version": "v4",
+  "count": 102,
+  "cases": [
+    {
+      "id": "EVAL-059",
+      "question": "Compare total sales and total expenses.",
+      "category": "multi_metric",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "gross_sales",
+          "total_expenses"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "FIXED: 'total_sales' -> gross_sales."
+    },
+    {
+      "id": "EVAL-060",
+      "question": "Show net sales and total payments.",
+      "category": "multi_metric",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "net_sales",
+          "total_payments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": null
+    },
+    {
+      "id": "EVAL-061",
+      "question": "Show cash in and cash out.",
+      "category": "multi_metric",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "cash_in",
+          "cash_out"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": null
+    },
+    {
+      "id": "EVAL-062",
+      "question": "How much capital was added and withdrawn?",
+      "category": "multi_metric",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "capital_invested",
+          "capital_withdrawn"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "FIXED: nonexistent 'capital_added'/'capital_withdrawn' ids replaced."
+    },
+    {
+      "id": "EVAL-063",
+      "question": "Compare total sales and net sales this month.",
+      "category": "multi_metric",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "gross_sales",
+          "net_sales"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": "this_month"
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "FIXED: 'total_sales' -> gross_sales."
+    },
+    {
+      "id": "EVAL-064",
+      "question": "Show total expenses and total payments last month.",
+      "category": "multi_metric",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_expenses",
+          "total_payments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": "last_month"
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": null
+    },
+    {
+      "id": "EVAL-065",
+      "question": "Compare cash in, cash out, and total expenses.",
+      "category": "multi_metric",
+      "difficulty": "hard",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "cash_in",
+          "cash_out",
+          "total_expenses"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": null
+    },
+    {
+      "id": "EVAL-066",
+      "question": "Show monthly total sales and total expenses.",
+      "category": "multi_metric",
+      "difficulty": "hard",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "gross_sales",
+          "total_expenses"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": "monthly",
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "FIXED: 'total_sales' -> gross_sales."
+    },
+    {
+      "id": "EVAL-067",
+      "question": "Compare capital added this year to capital withdrawn this year.",
+      "category": "multi_metric",
+      "difficulty": "hard",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "capital_invested",
+          "capital_withdrawn"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": "this_year"
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "FIXED: nonexistent 'capital_added'/'capital_withdrawn' ids replaced."
+    },
+    {
+      "id": "EVAL-068",
+      "question": "Show orders and total payments today.",
+      "category": "multi_metric",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "number_of_orders",
+          "total_payments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": "today"
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "FIXED: 'orders_count' -> number_of_orders."
+    },
+    {
+      "id": "EVAL-069",
+      "question": "How is the business doing?",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "parser",
+      "failure_reason": "No extractable metric, dimension, or time expression; too open-ended to parse.",
+      "notes": null
+    },
+    {
+      "id": "EVAL-070",
+      "question": "Show me everything.",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "parser",
+      "failure_reason": "No specific metric requested; cannot be mapped to a QueryRequest.",
+      "notes": null
+    },
+    {
+      "id": "EVAL-071",
+      "question": "What will our sales be next month?",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "time_resolution",
+      "failure_reason": "Requests a forecast/future value the system has no capability to produce.",
+      "notes": null
+    },
+    {
+      "id": "EVAL-072",
+      "question": "Give me profit by customer satisfaction.",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "semantic_resolution",
+      "failure_reason": "'profit' now resolves to gross_business_margin via a registered alias, but 'customer satisfaction' is not a registered dimension, and gross_business_margin supports no dimensions at all.",
+      "notes": "UPDATED: 'profit' is no longer an unmapped term post-fix (it is a gross_business_margin alias); the failure now must come specifically from the unregistered dimension, not a missing metric."
+    },
+    {
+      "id": "EVAL-073",
+      "question": "What's our best marketing channel?",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "semantic_resolution",
+      "failure_reason": "No marketing-channel dimension exists in the current registry.",
+      "notes": null
+    },
+    {
+      "id": "EVAL-074",
+      "question": "Why did expenses go up?",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "parser",
+      "failure_reason": "Causal/explanatory question; system only supports descriptive metric lookups.",
+      "notes": null
+    },
+    {
+      "id": "EVAL-075",
+      "question": "Should we cut costs next quarter?",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "parser",
+      "failure_reason": "Advisory/recommendation question, not a metric lookup.",
+      "notes": null
+    },
+    {
+      "id": "EVAL-076",
+      "question": "Show sales by employee performance rating.",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "semantic_resolution",
+      "failure_reason": "'employee performance rating' is not a registered dimension.",
+      "notes": null
+    },
+    {
+      "id": "EVAL-077",
+      "question": "asdkjaslkdj sales??",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "parser",
+      "failure_reason": "Malformed / low-signal input; parser should reject rather than guess.",
+      "notes": null
+    },
+    {
+      "id": "EVAL-078",
+      "question": "",
+      "category": "ambiguous_invalid",
+      "difficulty": "easy",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "parser",
+      "failure_reason": "Empty question; must be rejected before reaching the LLM parser.",
+      "notes": null
+    },
+    {
+      "id": "EVAL-079",
+      "question": "How many returns did we process?",
+      "category": "new_metric_coverage",
+      "difficulty": "easy",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_returns"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: total_returns had zero aliases before this pass."
+    },
+    {
+      "id": "EVAL-080",
+      "question": "What is the total value of our returns?",
+      "category": "new_metric_coverage",
+      "difficulty": "easy",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "return_amount"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: return_amount had zero aliases before this pass."
+    },
+    {
+      "id": "EVAL-081",
+      "question": "How much did we refund in cash?",
+      "category": "new_metric_coverage",
+      "difficulty": "easy",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "cash_refund"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: cash_refund had zero aliases before this pass."
+    },
+    {
+      "id": "EVAL-082",
+      "question": "How much was adjusted against customer dues?",
+      "category": "new_metric_coverage",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "due_adjustment"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: due_adjustment had zero aliases before this pass."
+    },
+    {
+      "id": "EVAL-083",
+      "question": "What is our total purchase value from suppliers?",
+      "category": "new_metric_coverage",
+      "difficulty": "easy",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_purchases"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: total_purchases had zero aliases before this pass."
+    },
+    {
+      "id": "EVAL-084",
+      "question": "How many purchase transactions did we make?",
+      "category": "new_metric_coverage",
+      "difficulty": "easy",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "purchase_transactions"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: purchase_transactions had zero aliases before this pass."
+    },
+    {
+      "id": "EVAL-085",
+      "question": "How much stock came into inventory?",
+      "category": "new_metric_coverage",
+      "difficulty": "easy",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "stock_in_quantity"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: stock_in_quantity had zero aliases before this pass."
+    },
+    {
+      "id": "EVAL-086",
+      "question": "How much stock went out of inventory?",
+      "category": "new_metric_coverage",
+      "difficulty": "easy",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "stock_out_quantity"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: stock_out_quantity had zero aliases before this pass."
+    },
+    {
+      "id": "EVAL-087",
+      "question": "What is our profit?",
+      "category": "new_metric_coverage",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "gross_business_margin"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW + regression: verifies 'profit' maps to gross_business_margin and NOT net_sales -- the two metrics previously collided on the alias 'income', which has since been removed from gross_business_margin to resolve the ambiguity."
+    },
+    {
+      "id": "EVAL-088",
+      "question": "What is our gross margin this month?",
+      "category": "new_metric_coverage",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "gross_business_margin"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": "this_month"
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: exercises the 'gross margin' alias."
+    },
+    {
+      "id": "EVAL-089",
+      "question": "How much capital did partners contribute?",
+      "category": "new_metric_coverage",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "capital_invested"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: exercises the 'capital contribution' alias distinct from the original 'capital added'."
+    },
+    {
+      "id": "EVAL-090",
+      "question": "How much capital withdrawal did partners make?",
+      "category": "new_metric_coverage",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "capital_withdrawn"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: exercises the 'capital withdrawal' alias distinct from the original 'capital withdrawn'."
+    },
+    {
+      "id": "EVAL-092",
+      "question": "How many purchase transactions did we make from our suppliers this week?",
+      "category": "new_metric_coverage",
+      "difficulty": "hard",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "purchase_transactions"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": "this_week"
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: pairs with EVAL-025 to disambiguate customer-side 'purchases' (number_of_orders) from supplier-side purchase_transactions when the supplier context is explicit."
+    },
+    {
+      "id": "EVAL-095",
+      "question": "Compare total purchases and total returns this quarter.",
+      "category": "multi_metric",
+      "difficulty": "hard",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_purchases",
+          "total_returns"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": "this_quarter"
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: multi-metric coverage combining two previously alias-less metrics."
+    },
+    {
+      "id": "EVAL-096",
+      "question": "Show me our capital.",
+      "category": "ambiguous_invalid",
+      "difficulty": "medium",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "parser",
+      "failure_reason": "'Capital' alone is ambiguous between capital_invested and capital_withdrawn; no direction (added/withdrawn/contributed/taken out) is given to disambiguate.",
+      "notes": "NEW: guards against the parser guessing a direction for capital movements."
+    },
+    {
+      "id": "EVAL-097",
+      "question": "Show stock movement.",
+      "category": "ambiguous_invalid",
+      "difficulty": "medium",
+      "expected_status": "failure",
+      "expected": null,
+      "expected_failed_stage": "parser",
+      "failure_reason": "'Stock movement' alone is ambiguous between stock_in_quantity and stock_out_quantity; no direction (in/received vs out/issued) is given to disambiguate.",
+      "notes": "NEW: mirrors EVAL-096 for the stock_in/stock_out pair."
+    },
+    {
+      "id": "EVAL-098",
+      "question": "What is our net income?",
+      "category": "new_metric_coverage",
+      "difficulty": "easy",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "net_sales"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: exercises the newly added 'net income' alias on net_sales."
+    },
+    {
+      "id": "EVAL-099",
+      "question": "What is our top line?",
+      "category": "new_metric_coverage",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "gross_sales"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: exercises the newly added 'top line' alias on gross_sales."
+    },
+    {
+      "id": "EVAL-100",
+      "question": "What are our total receipts?",
+      "category": "new_metric_coverage",
+      "difficulty": "easy",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_payments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: exercises the newly added 'receipts' alias on total_payments."
+    },
+    {
+      "id": "EVAL-101",
+      "question": "How much cash was disbursed?",
+      "category": "new_metric_coverage",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "cash_out"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: exercises the newly added 'cash disbursed' alias on cash_out."
+    },
+    {
+      "id": "EVAL-102",
+      "question": "Show stock in quantity by month.",
+      "category": "new_metric_coverage",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "stock_in_quantity"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": "monthly",
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "NEW: time-grain coverage for a previously alias-less/untested metric."
+    }
+  ]
+}
