@@ -324,9 +324,9 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
         ),
     ),
 
-    "cash_inflows": MetricDefinition(
-        name="cash_inflows",
-        display_name="Cash Inflows",
+    "cash_in": MetricDefinition(
+        name="cash_in",
+        display_name="Cash In",
         description=(
             "Total incoming cash transactions."
         ),
@@ -340,6 +340,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "cash_account_id",
             "cash_account_name",
             "transaction_type",
+            "amount",
         ),
         supported_time_grains=(
             "daily",
@@ -348,13 +349,13 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "quarterly",
             "yearly",
         ),
-        output_field="cash_inflows",
+        output_field="cash_in",
         aliases=("cash inflow", "cash in", "money coming in", "cash received", "money came into"),
     ),
 
-    "cash_outflows": MetricDefinition(
-        name="cash_outflows",
-        display_name="Cash Outflows",
+    "cash_out": MetricDefinition(
+        name="cash_out",
+        display_name="Cash Out",
         description=(
             "Total outgoing cash transactions."
         ),
@@ -368,6 +369,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "cash_account_id",
             "cash_account_name",
             "transaction_type",
+            "amount",
         ),
         supported_time_grains=(
             "daily",
@@ -376,7 +378,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "quarterly",
             "yearly",
         ),
-        output_field="cash_outflows",
+        output_field="cash_out",
         aliases=(
             "cash outflow", "cash out", "money going out", "cash spent", "cash disbursed", "money left",
         ),

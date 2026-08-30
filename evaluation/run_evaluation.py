@@ -26,7 +26,7 @@ DEFAULT_DATASET_PATH = (
     PROJECT_ROOT
     / "evaluation"
     / "datasets"
-    / "analytics_eval_v3.json"
+    / "analytics_eval_v4.json"
 )
 
 

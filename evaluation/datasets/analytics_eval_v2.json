@@ -3,14 +3,14 @@
   "count": 1,
   "cases": [
     {
-      "id": "EVAL-079",
-      "question": "How many returns did we process?",
-      "category": "direct_metric",
-      "difficulty": "easy",
+      "id": "EVAL-023",
+      "question": "How much did investors put into the company?",
+      "category": "metric_paraphrase",
+      "difficulty": "medium",
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_returns"
+          "capital_invested"
         ],
         "dimensions": [],
         "filters": [],
@@ -19,7 +19,175 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": "NEW: total_returns had zero aliases before this pass."
+      "notes": "FIXED: nonexistent 'capital_added' id replaced with capital_invested."
+    },
+    {
+      "id": "EVAL-024",
+      "question": "How much money was taken out by owners?",
+      "category": "metric_paraphrase",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "capital_withdrawn"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "FIXED: nonexistent 'capital_withdrawn' id replaced with capital_withdrawn."
+    },
+    {
+      "id": "EVAL-026",
+      "question": "What is the total paid amount?",
+      "category": "metric_paraphrase",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_payments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": null
+    },
+    {
+      "id": "EVAL-053",
+      "question": "Show expenses above 1000.",
+      "category": "filter",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_expenses"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "field": "amount",
+            "operator": ">",
+            "value": 1000
+          }
+        ],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": null
+    },
+    {
+      "id": "EVAL-054",
+      "question": "Show expenses under 500 this month.",
+      "category": "filter",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_expenses"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "field": "amount",
+            "operator": "<",
+            "value": 500
+          }
+        ],
+        "time_grain": null,
+        "time_range": "this_month"
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": null
+    },
+    {
+      "id": "EVAL-055",
+      "question": "Show total expenses in the rent expense category.",
+      "category": "filter",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_expenses"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "field": "expense_category",
+            "operator": "=",
+            "value": "rent"
+          }
+        ],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "FIXED: filter field 'category' -> 'expense_category'."
+    },
+    {
+      "id": "EVAL-056",
+      "question": "Show payments by cash this week.",
+      "category": "filter",
+      "difficulty": "medium",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_payments"
+        ],
+        "dimensions": ["payment_method"],
+        "filters": [
+          {
+            "field": "payment_method",
+            "operator": "=",
+            "value": "cash"
+          }
+        ],
+        "time_grain": null,
+        "time_range": "this_week"
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": null
+    },
+    {
+      "id": "EVAL-057",
+      "question": "Show expenses at least 250 in the travel category.",
+      "category": "filter",
+      "difficulty": "hard",
+      "expected_status": "success",
+      "expected": {
+        "metrics": [
+          "total_expenses"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "field": "amount",
+            "operator": ">=",
+            "value": 250
+          },
+          {
+            "field": "expense_category",
+            "operator": "=",
+            "value": "travel"
+          }
+        ],
+        "time_grain": null,
+        "time_range": null
+      },
+      "expected_failed_stage": null,
+      "failure_reason": null,
+      "notes": "FIXED: filter field 'category' -> 'expense_category'."
     }
   ]
 }

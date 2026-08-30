@@ -18,8 +18,8 @@ This module deliberately does NOT:
   - talk to a database, run build_query(), or execute SQL (Phase 8)
 
 It also doesn't depend on any specific LLM SDK. Callers inject a
-`CompletionFn` -- a plain callable of shape
-`(system_prompt: str, user_message: str) -> str`. That keeps this
+`CompletionFn` -- a plain callable that accepts a CompletionRequest.
+That keeps this
 module unit-testable with a canned function and swappable across
 providers.
 
@@ -29,12 +29,12 @@ actually run it):
     import anthropic
     client = anthropic.Anthropic()
 
-    def complete(system_prompt: str, user_message: str) -> str:
+    def complete(request: CompletionRequest) -> str:
         response = client.messages.create(
             model="<the model your deployment uses>",
             max_tokens=1024,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_message}],
+            system=request.system_prompt,
+            messages=[{"role": "user", "content": request.user_message}],
         )
         return "".join(
             block.text for block in response.content if block.type == "text"
@@ -50,7 +50,10 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import date
+from inspect import Parameter, signature
 from typing import Any, Callable, Optional, Sequence
+
+from etl.analytics.metrics.registry import list_metrics
 
 from etl.analytics.schemas import (
     AnalyticalQueryRequest,
@@ -65,10 +68,22 @@ from etl.analytics.nl_query.exceptions import (
     LLMResponseValidationError,
 )
 from etl.analytics.nl_query.prompts import MetricHint, build_system_prompt
+from etl.analytics.nl_query.response_schema import build_response_schema
 
-# (system_prompt, user_message) -> raw model text. Bring your own LLM
-# client; see the module docstring above for a wiring example.
-CompletionFn = Callable[[str, str], str]
+
+@dataclass(frozen=True)
+class CompletionRequest:
+    """Provider-neutral LLM completion request for NL query parsing."""
+
+    system_prompt: str
+    user_message: str
+    response_schema: dict[str, Any]
+
+
+# CompletionRequest -> raw model text. Bring your own LLM client; see the
+# module docstring above for a wiring example.
+CompletionFn = Callable[[CompletionRequest], str]
+LegacyCompletionFn = Callable[[str, str], str]
 
 _CODE_FENCE_RE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
 
@@ -232,12 +247,58 @@ def _request_from_json(data: dict[str, Any], *, raw_question: str) -> Analytical
 @dataclass(frozen=True)
 class ParserConfig:
     """Optional grounding context injected into the system prompt.
-    Purely for prompt quality -- never used to validate the LLM's
-    output on this side. See MetricHint / build_system_prompt."""
+    The parser also builds a structured-output schema from the metric
+    registry, so metric identifiers are constrained at the provider
+    boundary before normal JSON/Pydantic-style validation runs."""
 
     metric_hints: Sequence[MetricHint] = field(default_factory=tuple)
     dimension_hints: Sequence[str] = field(default_factory=tuple)
     today: Optional[date] = None
+
+
+def _default_metric_hints() -> tuple[MetricHint, ...]:
+    return tuple(MetricHint.from_definition(definition) for definition in list_metrics())
+
+
+def _default_dimension_hints() -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            {
+                dimension
+                for definition in list_metrics()
+                for dimension in definition.supported_dimensions
+            }
+        )
+    )
+
+
+def _accepts_request_object(complete: Callable[..., str]) -> bool:
+    """
+    Return True when a completion callable appears to accept one request.
+
+    This keeps existing tests and callers with the legacy two-argument
+    shape working while new providers consume CompletionRequest.
+    """
+
+    try:
+        params = list(signature(complete).parameters.values())
+    except (TypeError, ValueError):
+        return True
+
+    positional = [
+        param
+        for param in params
+        if param.kind
+        in (
+            Parameter.POSITIONAL_ONLY,
+            Parameter.POSITIONAL_OR_KEYWORD,
+        )
+    ]
+
+    if any(param.kind == Parameter.VAR_POSITIONAL for param in params):
+        return True
+
+    return len(positional) <= 1
 
 
 class NLQueryParser:
@@ -256,7 +317,12 @@ class NLQueryParser:
                                      valid AnalyticalQueryRequest.
     """
 
-    def __init__(self, complete: CompletionFn, *, config: Optional[ParserConfig] = None) -> None:
+    def __init__(
+        self,
+        complete: CompletionFn | LegacyCompletionFn,
+        *,
+        config: Optional[ParserConfig] = None,
+    ) -> None:
         self._complete = complete
         self._config = config or ParserConfig()
 
@@ -264,14 +330,28 @@ class NLQueryParser:
         if not isinstance(question, str) or not question.strip():
             raise InvalidQuestionError("question must be a non-empty string.")
 
+        metric_hints = tuple(self._config.metric_hints) or _default_metric_hints()
+        dimension_hints = tuple(self._config.dimension_hints) or _default_dimension_hints()
+
         system_prompt = build_system_prompt(
-            metric_hints=self._config.metric_hints,
-            dimension_hints=self._config.dimension_hints,
+            metric_hints=metric_hints,
+            dimension_hints=dimension_hints,
             today=self._config.today,
+        )
+        completion_request = CompletionRequest(
+            system_prompt=system_prompt,
+            user_message=question,
+            response_schema=build_response_schema(
+                metric_definitions=metric_hints,
+                dimension_names=dimension_hints,
+            ),
         )
 
         try:
-            raw_response = self._complete(system_prompt, question)
+            if _accepts_request_object(self._complete):
+                raw_response = self._complete(completion_request) # type: ignore
+            else:
+                raw_response = self._complete(system_prompt, question) # type: ignore
         except Exception as exc:  # noqa: BLE001 - deliberately re-raised as our own type
             raise LLMCallError(f"LLM completion call failed: {exc}") from exc
 

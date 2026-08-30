@@ -29,13 +29,14 @@ from etl.analytics.nl_query.exceptions import (
     LLMResponseValidationError,
     NLQueryParseError,
 )
-from etl.analytics.nl_query.parser import CompletionFn, NLQueryParser, ParserConfig
+from etl.analytics.nl_query.parser import CompletionFn, CompletionRequest, NLQueryParser, ParserConfig
 from etl.analytics.nl_query.prompts import MetricHint, build_system_prompt
 
 __all__ = [
     "NLQueryParser",
     "ParserConfig",
     "CompletionFn",
+    "CompletionRequest",
     "MetricHint",
     "build_system_prompt",
     "NLQueryParseError",

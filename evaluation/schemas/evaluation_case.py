@@ -53,6 +53,8 @@ class EvalCategory(str, Enum):
     FILTER = "filter"
     MULTI_METRIC = "multi_metric"
     AMBIGUOUS_INVALID = "ambiguous_invalid"
+    NEW_METRIC_COVERAGE = "new_metric_coverage"
+
 
 
 class Difficulty(str, Enum):

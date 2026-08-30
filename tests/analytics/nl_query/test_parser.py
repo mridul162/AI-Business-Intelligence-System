@@ -13,8 +13,10 @@ import json
 import unittest
 from datetime import date
 
+from etl.analytics.metrics.registry import list_metrics
 from etl.analytics.schemas import AnalyticalQueryRequest, NotResolvedError
 from etl.analytics.nl_query import (
+    CompletionRequest,
     InvalidQuestionError,
     LLMCallError,
     LLMResponseFormatError,
@@ -102,6 +104,26 @@ class TestHappyPath(unittest.TestCase):
         assert req.comparison is not None
         self.assertEqual(req.comparison.mode, "previous_period")
         self.assertFalse(req.is_ready_for_query_layer())
+
+    def test_canonical_metric_response_converts_to_request(self) -> None:
+        payload = {
+            "metric": "capital_invested",
+            "additional_metrics": [],
+            "dimensions": [],
+            "filters": [],
+            "time_grain": None,
+            "time_range": None,
+            "limit": None,
+            "sort_by": None,
+            "sort_order": None,
+            "comparison": None,
+        }
+
+        req = _parser_returning(json.dumps(payload)).parse(
+            "How much did investors invest in total?"
+        )
+
+        self.assertEqual(req.metric, "capital_invested")
 
 
 class TestResponseCleanup(unittest.TestCase):
@@ -234,6 +256,36 @@ class TestParserConfigIsPromptOnly(unittest.TestCase):
         self.assertIn("total_sales", captured["system_prompt"])
         self.assertIn("customer_name", captured["system_prompt"])
         self.assertIn("2026-08-22", captured["system_prompt"])
+
+
+class TestCompletionRequest(unittest.TestCase):
+    def test_parser_passes_generated_schema_to_completion_request(self) -> None:
+        captured = {}
+
+        def complete(request: CompletionRequest) -> str:
+            captured["request"] = request
+            return '{"metric": "capital_invested"}'
+
+        req = NLQueryParser(complete=complete).parse(
+            "How much did investors invested in total?"
+        )
+
+        completion_request = captured["request"]
+        self.assertIsInstance(completion_request, CompletionRequest)
+        self.assertIn("capital_invested", completion_request.system_prompt)
+        self.assertEqual(
+            completion_request.response_schema["properties"]["metric"]["enum"],
+            [definition.name for definition in list_metrics()],
+        )
+        self.assertIn(
+            "capital_invested",
+            completion_request.response_schema["properties"]["metric"]["enum"],
+        )
+        self.assertNotIn(
+            "total_investment",
+            completion_request.response_schema["properties"]["metric"]["enum"],
+        )
+        self.assertEqual(req.metric, "capital_invested")
 
 
 if __name__ == "__main__":

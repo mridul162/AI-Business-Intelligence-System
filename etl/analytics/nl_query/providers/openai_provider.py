@@ -4,7 +4,7 @@ OpenAI completion provider for natural-language analytical queries.
 This module adapts the OpenAI Responses API to the CompletionFn contract
 used by NLQueryParser:
 
-    (system_prompt: str, user_message: str) -> str
+    CompletionRequest -> str
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from openai import OpenAI
 
-from etl.analytics.nl_query.parser import CompletionFn
+from etl.analytics.nl_query.parser import CompletionFn, CompletionRequest
 from etl.config.settings import get_settings
 
 
@@ -21,7 +21,7 @@ from etl.config.settings import get_settings
 class OpenAICompletionConfig:
     """Configuration for the OpenAI completion provider."""
 
-    model: str = "gpt-4.1-mini"
+    model: str
 
 
 class OpenAICompletionProvider:
@@ -33,13 +33,20 @@ class OpenAICompletionProvider:
         client: OpenAI | None = None,
         config: OpenAICompletionConfig | None = None,
     ) -> None:
-        self.config = config or OpenAICompletionConfig()
+        settings = get_settings()
+
+        self.config = config or OpenAICompletionConfig(
+            model=settings.nl_query_model,
+        )
+
+        if not self.config.model.strip():
+            raise ValueError(
+                "OpenAI completion model must not be empty."
+            )
 
         if client is not None:
             self.client = client
             return
-
-        settings = get_settings()
 
         if not settings.openai_api_key:
             raise RuntimeError(
@@ -51,17 +58,30 @@ class OpenAICompletionProvider:
             api_key=settings.openai_api_key,
         )
 
-    def __call__(
-        self,
-        system_prompt: str,
-        user_message: str,
-    ) -> str:
-        """Generate a completion using the OpenAI Responses API."""
+    def __call__(self, request: CompletionRequest) -> str:
+        """
+        Generate a completion using the OpenAI Responses API.
+
+        The provider intentionally returns raw model text. JSON parsing
+        and validation belong to NLQueryParser.
+        """
 
         response = self.client.responses.create(
             model=self.config.model,
-            instructions=system_prompt,
-            input=user_message,
+            instructions=request.system_prompt,
+            input=request.user_message,
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "analytical_query_request",
+                    "description": (
+                        "A structured analytical query request using "
+                        "canonical registry metric identifiers."
+                    ),
+                    "schema": request.response_schema,
+                    "strict": True,
+                }
+            },
         )
 
         output = response.output_text
@@ -83,10 +103,21 @@ def create_openai_completion(
 
     settings = get_settings()
 
-    config = OpenAICompletionConfig(
-        model=model or settings.nl_query_model,
+    selected_model = (
+        model.strip()
+        if model is not None
+        else settings.nl_query_model
     )
 
-    provider = OpenAICompletionProvider(config=config)
+    if not selected_model:
+        raise ValueError(
+            "OpenAI completion model must not be empty."
+        )
+
+    provider = OpenAICompletionProvider(
+        config=OpenAICompletionConfig(
+            model=selected_model,
+        )
+    )
 
     return provider

@@ -180,7 +180,7 @@ def build_system_prompt(
         (
             "You extract analytical intent only. "
             "You do NOT answer the question, calculate numbers, "
-            "write SQL, generate SQL, inspect the database, or invent database "
+            "generate SQL, inspect the database, or invent database "
             "objects."
         ),
         "",
@@ -725,3 +725,299 @@ def build_system_prompt(
     )
 
     return "\n".join(lines)
+
+
+'''
+======================================================================
+ANALYTICS EVALUATION
+======================================================================
+
+Loading dataset: D:\\Projects\\LLM Repos\\AI-Business-Intelligence-System\\evaluation\\datasets\\analytics_eval_v4.json
+Loaded 61 evaluation cases.
+
+Running evaluation cases...
+
+======================================================================
+EVALUATION REPORT
+======================================================================
+"EvaluationReport(total_cases=61, passed_cases=44, failed_cases=17, accuracy=72.13, by_category={'dimension': EvaluationBreakdown(total=10, passed=8, failed=2, accuracy=80.0), 'direct_metric': EvaluationBreakdown(total=12, passed=12, failed=0, accuracy=100.0), 'filter': EvaluationBreakdown(total=9, passed=1, failed=8, accuracy=11.11), 'metric_paraphrase': EvaluationBreakdown(total=14, passed=11, failed=3, accuracy=78.57), 'time_based': EvaluationBreakdown(total=16, passed=12, failed=4, accuracy=75.0)}, by_difficulty={'easy': EvaluationBreakdown(total=21, passed=19, failed=2, accuracy=90.48), 'hard': EvaluationBreakdown(total=4, passed=3, failed=1, accuracy=75.0), 'medium': EvaluationBreakdown(total=36, passed=22, failed=14, accuracy=61.11)}, pipeline_failures=0, unexpected_errors=0, failed_case_ids=('EVAL-023', 'EVAL-024', 'EVAL-026', 'EVAL-027', 'EVAL-028', 'EVAL-034', 'EVAL-035', 'EVAL-052', 'EVAL-053', 'EVAL-054', 'EVAL-055', 'EVAL-056', 'EVAL-057', 'EVAL-058', 'EVAL-091', 'EVAL-093', 'EVAL-094'))"
+
+======================================================================
+FAILURE ANALYSIS
+======================================================================
+{
+  "total_results": 61,
+  "failed_results": 17,
+  "failure_counts": {
+    "pipeline_failure": 13,
+    "metric_mismatch": 4
+  },
+  "failures": [
+    {
+      "case_id": "EVAL-023",
+      "question": "How much did investors put into the company?",
+      "category": "metric_paraphrase",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "semantic_resolution",
+      "expected_failed_stage": null,
+      "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'total_investment'."
+    },
+    {
+      "case_id": "EVAL-024",
+      "question": "How much money was withdrawn?",
+      "category": "metric_paraphrase",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "semantic_resolution",
+      "expected_failed_stage": null,
+      "error": "Semantic resolution failed (1 issue(s)): metric: Could not resolve metric value 'withdrawn_amount'."
+    },
+    {
+      "case_id": "EVAL-026",
+      "question": "What did customers pay us in total?",
+      "category": "metric_paraphrase",
+      "difficulty": "medium",
+      "failure_types": [
+        "metric_mismatch"
+      ],
+      "field_diffs": [
+        {
+          "field": "metrics",
+          "expected": [
+            "total_payments"
+          ],
+          "actual": [
+            "gross_sales"
+          ]
+        }
+      ],
+      "actual_failed_stage": null,
+      "expected_failed_stage": null,
+      "error": null
+    },
+    {
+      "case_id": "EVAL-027",
+      "question": "What were our sales today?",
+      "category": "time_based",
+      "difficulty": "easy",
+      "failure_types": [
+        "metric_mismatch"
+      ],
+      "field_diffs": [
+        {
+          "field": "metrics",
+          "expected": [
+            "gross_sales"
+          ],
+          "actual": [
+            "net_sales"
+          ]
+        }
+      ],
+      "actual_failed_stage": null,
+      "expected_failed_stage": null,
+      "error": null
+    },
+    {
+      "case_id": "EVAL-028",
+      "question": "What were our sales yesterday?",
+      "category": "time_based",
+      "difficulty": "easy",
+      "failure_types": [
+        "metric_mismatch"
+      ],
+      "field_diffs": [
+        {
+          "field": "metrics",
+          "expected": [
+            "gross_sales"
+          ],
+          "actual": [
+            "net_sales"
+          ]
+        }
+      ],
+      "actual_failed_stage": null,
+      "expected_failed_stage": null,
+      "error": null
+    },
+    {
+      "case_id": "EVAL-034",
+      "question": "What were our quarterly sales?",
+      "category": "time_based",
+      "difficulty": "medium",
+      "failure_types": [
+        "metric_mismatch"
+      ],
+      "field_diffs": [
+        {
+          "field": "metrics",
+          "expected": [
+            "gross_sales"
+          ],
+          "actual": [
+            "net_sales"
+          ]
+        }
+      ],
+      "actual_failed_stage": null,
+      "expected_failed_stage": null,
+      "error": null
+    },
+    {
+      "case_id": "EVAL-035",
+      "question": "Show total sales by year.",
+      "category": "time_based",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "semantic_resolution",
+      "expected_failed_stage": null,
+      "error": "Semantic resolution failed (1 issue(s)): dimensions[0]: Could not resolve dimensions[0] value 'year'."
+    },
+    {
+      "case_id": "EVAL-052",
+      "question": "Show gross sales for card payments.",
+      "category": "filter",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "query_execution",
+      "expected_failed_stage": null,
+      "error": "column \"payment_method\" does not exist\nLINE 3: WHERE payment_method = 'card'\n              ^\n"
+    },
+    {
+      "case_id": "EVAL-053",
+      "question": "Show expenses where amount is above 1000.",
+      "category": "filter",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "query_execution",
+      "expected_failed_stage": null,
+      "error": "current transaction is aborted, commands ignored until end of transaction block\n"
+    },
+    {
+      "case_id": "EVAL-054",
+      "question": "Show expenses where amount is under 500 this month.",
+      "category": "filter",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "query_execution",
+      "expected_failed_stage": null,
+      "error": "current transaction is aborted, commands ignored until end of transaction block\n"
+    },
+    {
+      "case_id": "EVAL-055",
+      "question": "Show total expenses in the rent expense category.",
+      "category": "filter",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "query_execution",
+      "expected_failed_stage": null,
+      "error": "current transaction is aborted, commands ignored until end of transaction block\n"
+    },
+    {
+      "case_id": "EVAL-056",
+      "question": "Show payments by cash this week.",
+      "category": "filter",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "query_execution",
+      "expected_failed_stage": null,
+      "error": "current transaction is aborted, commands ignored until end of transaction block\n"
+    },
+    {
+      "case_id": "EVAL-057",
+      "question": "Show expenses at least 250 in the travel category.",
+      "category": "filter",
+      "difficulty": "hard",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "semantic_resolution",
+      "expected_failed_stage": null,
+      "error": "Semantic resolution failed (1 issue(s)): filter:total_expenses: Could not resolve filter:total_expenses value 'total_expenses'."
+    },
+    {
+      "case_id": "EVAL-058",
+      "question": "Show orders from this month.",
+      "category": "filter",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "query_execution",
+      "expected_failed_stage": null,
+      "error": "current transaction is aborted, commands ignored until end of transaction block\n"
+    },
+    {
+      "case_id": "EVAL-091",
+      "question": "Show gross sales by product category.",
+      "category": "dimension",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "query_execution",
+      "expected_failed_stage": null,
+      "error": "current transaction is aborted, commands ignored until end of transaction block\n"
+    },
+    {
+      "case_id": "EVAL-093",
+      "question": "Show total returns by return type.",
+      "category": "dimension",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "query_execution",
+      "expected_failed_stage": null,
+      "error": "current transaction is aborted, commands ignored until end of transaction block\n"
+    },
+    {
+      "case_id": "EVAL-094",
+      "question": "Show returns with status pending.",
+      "category": "filter",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "semantic_resolution",
+      "expected_failed_stage": null,
+      "error": "Semantic resolution failed (1 issue(s)): filter:return_status: Could not resolve filter:return_status value 'return_status'."
+    }
+  ]
+}
+
+======================================================================
+EVALUATION COMPLETE
+======================================================================
+'''

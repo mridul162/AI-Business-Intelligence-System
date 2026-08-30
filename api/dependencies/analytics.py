@@ -14,7 +14,12 @@ from sqlalchemy.orm import Session
 
 from database.connection import session_scope
 from etl.analytics.execution.executor import AnalyticalQueryExecutor
-from etl.analytics.nl_query.parser import CompletionFn, NLQueryParser, ParserConfig
+from etl.analytics.nl_query.parser import (
+    CompletionFn,
+    CompletionRequest,
+    NLQueryParser,
+    ParserConfig,
+)
 from etl.analytics.nl_query.providers.openai_provider import create_openai_completion
 from etl.analytics.query import build_query
 from etl.analytics.query.models import CompiledQuery, QueryRequest
@@ -24,7 +29,7 @@ from etl.analytics.semantic.time_resolver import resolve_analytical_query_time
 from etl.analytics.service.analytical_query_service import AnalyticalQueryService
 
 
-def _completion_not_configured(system_prompt: str, user_message: str) -> str:
+def _completion_not_configured(request: CompletionRequest) -> str:
     raise RuntimeError(
         "Natural-language query completion provider is not configured."
     )

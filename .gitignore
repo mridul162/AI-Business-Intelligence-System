@@ -3,6 +3,8 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+evaluation_report.txt
+
 # C extensions
 *.so
 
