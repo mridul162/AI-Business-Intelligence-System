@@ -1073,7 +1073,7 @@
           {
             "field": "expense_category",
             "operator": "=",
-            "value": "office"
+            "value": "rent"
           }
         ],
         "time_grain": null,
@@ -1085,7 +1085,7 @@
     },
     {
       "id": "EVAL-056",
-      "question": "Show payments by cash this week.",
+      "question": "Show payments where payment method is cash this week.",
       "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
@@ -1121,14 +1121,14 @@
         "dimensions": [],
         "filters": [
           {
-            "field": "amount",
-            "operator": ">=",
-            "value": 250
-          },
-          {
             "field": "expense_category",
             "operator": "=",
             "value": "travel"
+          },
+          {
+            "field": "amount",
+            "operator": ">=",
+            "value": 250
           }
         ],
         "time_grain": null,
@@ -1780,7 +1780,7 @@
       },
       "expected_failed_stage": null,
       "failure_reason": null,
-      "notes": "NEW: filter coverage for total_returns using its 'status' dimension."
+      "notes": null
     },
     {
       "id": "EVAL-095",

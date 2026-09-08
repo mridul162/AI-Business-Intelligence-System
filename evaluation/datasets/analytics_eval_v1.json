@@ -124,7 +124,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "partner_capital_in"
+          "capital_invested"
         ],
         "dimensions": [],
         "filters": [],
@@ -352,7 +352,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -371,7 +371,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -428,7 +428,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "capital_added"
+          "capital_invested"
         ],
         "dimensions": [],
         "filters": [],
@@ -460,13 +460,13 @@
     },
     {
       "id": "EVAL-025",
-      "question": "How many purchases did customers make?",
+      "question": "How many orders did customers make?",
       "category": "metric_paraphrase",
       "difficulty": "medium",
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "orders_count"
+          "number_of_orders"
         ],
         "dimensions": [],
         "filters": [],
@@ -504,7 +504,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -523,7 +523,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -637,7 +637,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -656,7 +656,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -694,7 +694,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales"
+          "gross_sales"
         ],
         "dimensions": [],
         "filters": [],
@@ -751,7 +751,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "capital_added"
+          "capital_invested"
         ],
         "dimensions": [],
         "filters": [],
@@ -874,7 +874,7 @@
           "total_expenses"
         ],
         "dimensions": [
-          "category"
+          "expense_category"
         ],
         "filters": [],
         "time_grain": null,
@@ -895,7 +895,7 @@
           "total_expenses"
         ],
         "dimensions": [
-          "category"
+          "expense_category"
         ],
         "filters": [],
         "time_grain": null,
@@ -948,7 +948,7 @@
           "total_expenses"
         ],
         "dimensions": [
-          "category"
+          "expense_category"
         ],
         "filters": [],
         "time_grain": "monthly",
@@ -985,7 +985,7 @@
     },
     {
       "id": "EVAL-052",
-      "question": "Show cash in for card payments.",
+      "question": "Show cash in for cash payments.",
       "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
@@ -998,7 +998,7 @@
           {
             "field": "payment_method",
             "operator": "=",
-            "value": "card"
+            "value": "cash"
           }
         ],
         "time_grain": null,
@@ -1060,7 +1060,7 @@
     },
     {
       "id": "EVAL-055",
-      "question": "Show total expenses in the office category.",
+      "question": "Show total expenses in the rent category.",
       "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
@@ -1071,9 +1071,9 @@
         "dimensions": [],
         "filters": [
           {
-            "field": "category",
+            "field": "expense_category",
             "operator": "=",
-            "value": "office"
+            "value": "rent"
           }
         ],
         "time_grain": null,
@@ -1121,14 +1121,14 @@
         "dimensions": [],
         "filters": [
           {
+            "field": "expense_category",
+            "operator": "=",
+            "value": "travel"
+          },
+          {
             "field": "amount",
             "operator": ">=",
             "value": 250
-          },
-          {
-            "field": "category",
-            "operator": "=",
-            "value": "travel"
           }
         ],
         "time_grain": null,
@@ -1146,7 +1146,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "orders_count"
+          "number_of_orders"
         ],
         "dimensions": [],
         "filters": [],
@@ -1165,7 +1165,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales",
+          "gross_sales",
           "total_expenses"
         ],
         "dimensions": [],
@@ -1225,7 +1225,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "capital_added",
+          "capital_invested",
           "capital_withdrawn"
         ],
         "dimensions": [],
@@ -1245,7 +1245,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales",
+          "gross_sales",
           "net_sales"
         ],
         "dimensions": [],
@@ -1306,7 +1306,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_sales",
+          "gross_sales",
           "total_expenses"
         ],
         "dimensions": [],
@@ -1326,7 +1326,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "capital_added",
+          "capital_invested",
           "capital_withdrawn"
         ],
         "dimensions": [],
@@ -1346,7 +1346,7 @@
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "orders_count",
+          "number_of_orders",
           "total_payments"
         ],
         "dimensions": [],

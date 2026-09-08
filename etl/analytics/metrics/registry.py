@@ -59,8 +59,6 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "product_category",
             "location_id",
             "location_name",
-            "collected_by",
-            "payment_method",
         ),
         supported_time_grains=(
             "daily",
@@ -341,6 +339,8 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "cash_account_name",
             "transaction_type",
             "amount",
+            "created_by",
+            "collected_by"
         ),
         supported_time_grains=(
             "daily",
@@ -370,6 +370,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
             "cash_account_name",
             "transaction_type",
             "amount",
+            "created_by"
         ),
         supported_time_grains=(
             "daily",
