@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 evaluation_report.txt
+projectflow_2.md
 
 # C extensions
 *.so
