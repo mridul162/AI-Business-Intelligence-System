@@ -182,7 +182,7 @@ def test_empty_result_is_successful(sqlite_engine):
 def test_connection_failure_becomes_database_connection_error():
     fake_engine = MagicMock()
     fake_engine.connect.side_effect = OperationalError(
-        "connect failed", None, None
+        "connect failed", None, None # type: ignore
     )
     built_query = _built_query(select(text("1")))
 
