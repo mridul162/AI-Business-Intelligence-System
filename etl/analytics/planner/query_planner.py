@@ -4,38 +4,47 @@ Turns a resolved AnalyticalQueryRequest into a QueryPlanResult.
 This module is REGISTRY-DRIVEN: it never special-cases specific
 metric names (no `if "total_sales" in metrics`). All grouping
 decisions come from looking up each metric's MetricDefinition in the
-metric registry and comparing `source_view` / `fixed_filters`.
+metric registry and comparing `source_view` / `filters`.
 
 --------------------------------------------------------------------
-ADAPTER NOTE -- read this before wiring into the real project
+CONTRACT NOTE -- fixed filters are NOT merged into QueryPlan.filters
 --------------------------------------------------------------------
-I don't have your actual metric registry module, so the three types
-below (`RegistryFilter`, `MetricDefinition`, `MetricRegistry`) are a
-minimal Protocol/interface inferred from the review discussion, not
-your real classes. Two ways to connect this to your codebase:
+etl.analytics.metrics.definitions.MetricDefinition.filters holds
+trusted, registry-authored raw SQL fragments (e.g. "direction = 'IN'"),
+not structured field/operator/value objects. This planner cannot (and
+should not try to) parse those strings -- see the SQL Builder's
+clauses.fixed_filter_clauses(), which independently re-fetches each
+plan metric's MetricDefinition.filters straight from the registry via
+get_metric() and applies them as trusted text() clauses at build time.
 
-  1. If your registry's metric objects already expose `.source_view`
-     and an iterable `.fixed_filters` of objects with
-     `.field` / `.operator` / `.value`, you can delete the stub
-     classes below and just change the `resolve_metric` import to
-     point at your real registry lookup function. Nothing else in
-     `plan_query` needs to change.
-  2. Otherwise, write a small adapter function that maps your real
-     metric definition to this shape and pass it in as
-     `resolve_metric`.
+So: QueryPlan.filters here holds ONLY user-requested filters (from
+the request). Grouping still respects fixed filters -- two metrics
+that share a source_view but have different `filters` tuples (e.g.
+cash_in's "direction = 'IN'" vs cash_out's "direction = 'OUT'") are
+still put in separate QueryPlans, via exact-set comparison of the raw
+filter strings (see _group_metrics). This is a conservative rule: it
+correctly separates metrics with genuinely conflicting fixed filters,
+but it will also separate two metrics whose fixed filters happen to
+differ without truly conflicting (e.g. two unrelated single-field
+filters on different columns) into different QueryPlans even though a
+smarter parser could have combined them. That's a correctness-over-
+cleverness tradeoff given the registry doesn't expose structured
+filter metadata.
 
-The request type (`AnalyticalQueryRequest`) is handled the same way:
-`plan_query` only ever reads `.metrics`, `.dimensions`, `.filters`,
-`.time_range`, `.time_grain`, `.sort_by`, `.sort_order`, `.limit`,
-and an optional `.comparison` flag (see MergeStrategy selection
-below) via getattr, so any object with those attributes works.
+The request type (`AnalyticalQueryRequest`) is duck-typed: plan_query
+only ever reads `.metrics`, `.dimensions`, `.filters`, `.time_range`,
+`.time_grain`, `.sort_by`, `.sort_order`, `.limit`, and an optional
+`.comparison` flag (see MergeStrategy selection below) via getattr,
+so any object with those attributes works.
 --------------------------------------------------------------------
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Callable, Iterable, Optional, Protocol
+from dataclasses import dataclass, field
+from typing import Any, Callable, Iterable
+
+from etl.analytics.metrics.definitions import MetricDefinition
 
 try:
     from .query_plan import (
@@ -55,52 +64,8 @@ except ImportError:  # pragma: no cover - fallback for standalone/script use
     )
 
 
-# --------------------------------------------------------------------
-# Registry interface (see ADAPTER NOTE above)
-# --------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class RegistryFilter:
-    """A metric's own always-on filter, e.g. direction = 'IN'."""
-
-    field: str
-    operator: str
-    value: Any
-
-
-@dataclass(frozen=True)
-class MetricDefinition:
-    """Minimal shape this planner needs from a registry metric."""
-
-    name: str
-    source_view: str
-    fixed_filters: tuple[RegistryFilter, ...] = ()
-
-
-class MetricRegistry(Protocol):
-    def get_metric(self, name: str) -> MetricDefinition:
-        ...
-
-
 class UnknownMetricError(KeyError):
     """Raised when a requested metric name isn't in the registry."""
-
-
-# --------------------------------------------------------------------
-# Errors
-# --------------------------------------------------------------------
-
-
-class ConflictingFixedFiltersError(ValueError):
-    """
-    Raised when two metrics that were forced together (e.g. by an
-    explicit comparison request) share a source_view but have fixed
-    filters that directly conflict, and the caller has no way to
-    split them (this shouldn't happen in normal planning -- planning
-    always splits conflicting metrics into separate QueryPlans -- but
-    is kept as a defensive check).
-    """
 
 
 # --------------------------------------------------------------------
@@ -108,81 +73,38 @@ class ConflictingFixedFiltersError(ValueError):
 # --------------------------------------------------------------------
 
 
-def _filters_compatible(
-    a: tuple[RegistryFilter, ...], b: tuple[RegistryFilter, ...]
-) -> bool:
-    """
-    Two fixed-filter sets are compatible if no field appears in both
-    with a different value. Compatible sets can be merged into one
-    QueryPlan (their union becomes that plan's fixed filters);
-    incompatible sets force separate QueryPlans.
-    """
-    a_by_field = {f.field: (f.operator, f.value) for f in a}
-    for f in b:
-        existing = a_by_field.get(f.field)
-        if existing is not None and existing != (f.operator, f.value):
-            return False
-    return True
-
-
-def _merge_filters(
-    a: tuple[RegistryFilter, ...], b: tuple[RegistryFilter, ...]
-) -> tuple[RegistryFilter, ...]:
-    """Union two compatible fixed-filter sets, deduplicating by field."""
-    merged: dict[str, RegistryFilter] = {f.field: f for f in a}
-    for f in b:
-        merged.setdefault(f.field, f)
-    return tuple(merged.values())
-
-
 @dataclass
 class _Group:
-    """One in-progress cluster of metrics destined for one QueryPlan."""
+    """One cluster of metrics destined for one QueryPlan."""
 
     source_view: str
-    metric_names: list[str]
-    fixed_filters: tuple[RegistryFilter, ...]
+    fixed_filters: frozenset[str]
+    metric_names: list[str] = field(default_factory=list)
 
 
-def _group_metrics(
-    definitions: list[MetricDefinition],
-) -> list[_Group]:
+def _group_metrics(definitions: list[MetricDefinition]) -> list[_Group]:
     """
     Cluster resolved metric definitions into groups that can share one
-    QueryPlan: same source_view, and pairwise-compatible fixed
-    filters. Greedy: within a source_view, add each metric to the
-    first existing group whose merged fixed filters remain compatible;
-    otherwise start a new group.
+    QueryPlan: same source_view AND an identical set of registry fixed
+    filters. Order-preserving (first-seen group order), so plan order
+    is deterministic for a given request.
     """
-    groups: list[_Group] = []
+    groups_by_key: dict[tuple[str, frozenset[str]], _Group] = {}
+    ordered_keys: list[tuple[str, frozenset[str]]] = []
 
     for md in definitions:
-        placed = False
-        for g in groups:
-            if g.source_view != md.source_view:
-                continue
-            if _filters_compatible(g.fixed_filters, md.fixed_filters):
-                g.metric_names.append(md.name)
-                g.fixed_filters = _merge_filters(
-                    g.fixed_filters, md.fixed_filters
-                )
-                placed = True
-                break
-        if not placed:
-            groups.append(
-                _Group(
-                    source_view=md.source_view,
-                    metric_names=[md.name],
-                    fixed_filters=md.fixed_filters,
-                )
-            )
+        key = (md.source_view, frozenset(md.filters))
+        group = groups_by_key.get(key)
+        if group is None:
+            group = _Group(source_view=md.source_view, fixed_filters=key[1])
+            groups_by_key[key] = group
+            ordered_keys.append(key)
+        group.metric_names.append(md.name)
 
-    return groups
+    return [groups_by_key[key] for key in ordered_keys]
 
 
-def _choose_merge_strategy(
-    groups: list[_Group], request: Any
-) -> MergeStrategy:
+def _choose_merge_strategy(groups: list[_Group], request: Any) -> MergeStrategy:
     """
     Decide how multiple QueryPlans should be merged.
 
@@ -204,32 +126,22 @@ def _choose_merge_strategy(
     return MergeStrategy.SIDE_BY_SIDE
 
 
-def _build_query_plan(
-    group: _Group, request: Any
-) -> QueryPlan:
+def _build_query_plan(group: _Group, request: Any) -> QueryPlan:
     """
     Build one QueryPlan from a metric group plus the shared
     request-level dimensions/filters/time/sort/limit.
 
-    Request-level filters (user-requested) and the group's merged
-    fixed filters (registry-derived) are combined here -- see
-    PlanFilter's docstring for why QueryPlan doesn't track which is
-    which past this point.
+    QueryPlan.filters holds ONLY the user-requested filters -- see
+    module docstring for why registry fixed filters are deliberately
+    left out here and applied later by the SQL Builder instead.
     """
-    user_filters = tuple(
-        PlanFilter(field=f.field, operator=f.operator, value=f.value)
-        for f in getattr(request, "filters", ()) or ()
-    )
-    fixed_filters = tuple(
-        PlanFilter(field=f.field, operator=f.operator, value=f.value)
-        for f in group.fixed_filters
-    )
+    user_filters: tuple[PlanFilter, ...] = tuple(getattr(request, "filters", ()) or ())
 
     return QueryPlan(
         source_view=group.source_view,
         metrics=tuple(group.metric_names),
         dimensions=tuple(getattr(request, "dimensions", ()) or ()),
-        filters=user_filters + fixed_filters,
+        filters=user_filters,
         time_range=getattr(request, "time_range", None),
         time_grain=getattr(request, "time_grain", None),
         sort_by=getattr(request, "sort_by", None),
@@ -257,8 +169,9 @@ def plan_query(
             `.time_grain`, `.sort_by`, `.sort_order`, `.limit`, and
             `.comparison` (bool, defaults to False if absent).
         resolve_metric: looks up a metric name in the registry and
-            returns its MetricDefinition. Raise UnknownMetricError
-            (or let a KeyError propagate) for an unknown name.
+            returns its MetricDefinition (e.g.
+            etl.analytics.metrics.registry.get_metric). A KeyError
+            for an unknown name is re-raised as UnknownMetricError.
 
     Returns:
         A bare QueryPlan if all requested metrics can share one SQL
@@ -269,7 +182,12 @@ def plan_query(
     if not metric_names:
         raise ValueError("plan_query requires at least one metric.")
 
-    definitions = [resolve_metric(name) for name in metric_names]
+    definitions = []
+    for name in metric_names:
+        try:
+            definitions.append(resolve_metric(name))
+        except KeyError as exc:
+            raise UnknownMetricError(f"Unknown metric: {name!r}") from exc
 
     groups = _group_metrics(definitions)
 

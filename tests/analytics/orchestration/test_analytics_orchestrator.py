@@ -21,7 +21,7 @@ def make_plan(source_view: str, metrics: tuple[str, ...] = ("m",)) -> QueryPlan:
 
 def make_built_query(plan: QueryPlan, tag: str) -> BuiltQuery:
     return BuiltQuery(
-        statement=tag,  # not a real SQLAlchemy statement -- fine, the # type: ignore
+        statement=tag,  # not a real SQLAlchemy statement -- fine, the  # type: ignore
                         # orchestrator never inspects it, only passes it through
         plan=plan,
         metric_output_fields=plan.metrics,

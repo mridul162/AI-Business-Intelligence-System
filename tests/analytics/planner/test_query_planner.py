@@ -1,35 +1,51 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import pytest
 
+from etl.analytics.metrics.definitions import MetricDefinition
 from etl.analytics.planner.query_plan import MergeStrategy, MultiQueryPlan, QueryPlan
-from etl.analytics.planner.query_planner import MetricDefinition, RegistryFilter, plan_query
+from etl.analytics.planner.query_planner import UnknownMetricError, plan_query
 
 
 # --------------------------------------------------------------------
 # Tiny in-memory registry + request stand-ins for testing
 # --------------------------------------------------------------------
 
+
+def make_metric(
+    name: str,
+    source_view: str,
+    filters: tuple[str, ...] = (),
+    supported_dimensions: tuple[str, ...] = (),
+    supported_time_grains: tuple[str, ...] = (
+        "daily", "weekly", "monthly", "quarterly", "yearly",
+    ),
+) -> MetricDefinition:
+    """Build a minimal-but-real MetricDefinition for planner tests."""
+    return MetricDefinition(
+        name=name,
+        display_name=name,
+        description=name,
+        source_view=source_view,
+        aggregation="sum",
+        expression=f"SUM({name})",
+        filters=filters,
+        supported_dimensions=supported_dimensions,
+        supported_time_grains=supported_time_grains, # type: ignore
+        output_field=name,
+    )
+
+
 REGISTRY = {
-    "total_sales": MetricDefinition(
-        name="total_sales", source_view="analytics.v_sales"
+    "total_sales": make_metric("total_sales", "analytics.v_sales"),
+    "net_sales": make_metric("net_sales", "analytics.v_sales"),
+    "total_expenses": make_metric("total_expenses", "analytics.v_expenses"),
+    "cash_in": make_metric(
+        "cash_in", "analytics.v_cash_transactions", filters=("direction = 'IN'",)
     ),
-    "net_sales": MetricDefinition(
-        name="net_sales", source_view="analytics.v_sales"
-    ),
-    "total_expenses": MetricDefinition(
-        name="total_expenses", source_view="analytics.v_expenses"
-    ),
-    "cash_in": MetricDefinition(
-        name="cash_in",
-        source_view="analytics.v_cash_transactions",
-        fixed_filters=(RegistryFilter("direction", "eq", "IN"),),
-    ),
-    "cash_out": MetricDefinition(
-        name="cash_out",
-        source_view="analytics.v_cash_transactions",
-        fixed_filters=(RegistryFilter("direction", "eq", "OUT"),),
+    "cash_out": make_metric(
+        "cash_out", "analytics.v_cash_transactions", filters=("direction = 'OUT'",)
     ),
 }
 
@@ -52,7 +68,7 @@ class FakeRequest:
 
 
 # --------------------------------------------------------------------
-# Case A: same source, compatible (no) fixed filters -> one QueryPlan
+# Case A: same source, identical (no) fixed filters -> one QueryPlan
 # --------------------------------------------------------------------
 
 
@@ -82,8 +98,10 @@ def test_case_b_conflicting_fixed_filters_split():
     assert {p.metrics[0] for p in result.plans} == {"cash_in", "cash_out"}
     for p in result.plans:
         assert p.source_view == "analytics.v_cash_transactions"
-        # fixed filter should have made it into the plan's filters
-        assert any(f.field == "direction" for f in p.filters)
+        # Registry fixed filters are NOT injected into QueryPlan.filters
+        # (the SQL Builder pulls them from the registry itself) -- only
+        # user-requested filters live here, and this request had none.
+        assert p.filters == ()
 
 
 # --------------------------------------------------------------------
@@ -121,7 +139,7 @@ def test_case_d_single_metric_by_month():
     request = FakeRequest(
         metrics=("total_sales",),
         dimensions=("region",),
-        time_grain="month",
+        time_grain="monthly",
     )
 
     result = plan_query(request, resolve_metric)
@@ -129,7 +147,24 @@ def test_case_d_single_metric_by_month():
     assert isinstance(result, QueryPlan)
     assert result.metrics == ("total_sales",)
     assert result.dimensions == ("region",)
-    assert result.time_grain == "month"
+    assert result.time_grain == "monthly"
+
+
+# --------------------------------------------------------------------
+# User filters ARE carried through
+# --------------------------------------------------------------------
+
+
+def test_user_filters_pass_through_to_query_plan():
+    from etl.analytics.planner.query_plan import PlanFilter
+
+    user_filter = PlanFilter(field="region", operator="eq", value="West")
+    request = FakeRequest(metrics=("total_sales",), filters=(user_filter,))
+
+    result = plan_query(request, resolve_metric)
+
+    assert isinstance(result, QueryPlan)
+    assert result.filters == (user_filter,)
 
 
 # --------------------------------------------------------------------
@@ -140,7 +175,7 @@ def test_case_d_single_metric_by_month():
 def test_unknown_metric_raises():
     request = FakeRequest(metrics=("does_not_exist",))
 
-    with pytest.raises(KeyError):
+    with pytest.raises(UnknownMetricError):
         plan_query(request, resolve_metric)
 
 
@@ -155,10 +190,8 @@ def test_three_way_split_groups_correctly():
     """
     total_sales/net_sales (v_sales) should merge into one plan while
     cash_in/cash_out (v_cash_transactions, conflicting filters) stay
-    split -- three metrics in, three groups... actually two groups for
-    sales + two for cash = verifies grouping doesn't cross source
-    views and doesn't over-merge within a source view when filters
-    conflict.
+    split -- verifies grouping doesn't cross source views and doesn't
+    over-merge within a source view when fixed filters conflict.
     """
     request = FakeRequest(
         metrics=("total_sales", "net_sales", "cash_in", "cash_out")
