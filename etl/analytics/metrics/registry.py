@@ -95,7 +95,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
         output_field="net_sales",
         aliases=(
             "net revenue", "net income", "sales after returns",
-            "final sales", "earn after returns", "revenue after returns", "revenue after customer returns" 
+            "final sales", "earn after returns", "revenue after returns", "revenue after customer returns", "earn", "earnings", "income"
         ),
     ),
 
@@ -592,7 +592,7 @@ METRIC_REGISTRY: dict[str, MetricDefinition] = {
         # an alias collision between two different metrics. Removed
         # here and replaced with margin-specific terms so "income"
         # unambiguously maps to net_sales.
-        aliases=("profit", "margin", "business margin", "gross margin"),
+        aliases=("profit", "margin", "business margin", "gross margin", "earn", "income"),
     ),
 }
 

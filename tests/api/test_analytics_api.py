@@ -1,27 +1,37 @@
 from __future__ import annotations
 
-from etl.analytics.query.models import QueryRequest
-from etl.analytics.service.models import AnalyticalQueryResponse
+from typing import Any
+
+from etl.analytics.executor.errors import QueryExecutionFailedError
+from etl.analytics.response.models import (
+    AnalyticalError,
+    AnalyticalResponse,
+    AnalyticalResponseStatus,
+    MetricMetadata,
+    QueryContext,
+    ResponseMetadata,
+)
+from etl.analytics.semantic.models import SemanticResolutionError, ResolutionResult
 
 from fastapi.testclient import TestClient
 
 from api.app import create_app
-from api.dependencies.analytics import get_analytics_service
+from api.dependencies.analytics import get_analytics_application
 
 
-class StubAnalyticsService:
-    def __init__(self, response: AnalyticalQueryResponse) -> None:
+class StubAnalyticsApplication:
+    def __init__(self, response: AnalyticalResponse) -> None:
         self.response = response
         self.questions: list[str] = []
 
-    def query(self, text: str) -> AnalyticalQueryResponse:
+    def query(self, text: str) -> AnalyticalResponse:
         self.questions.append(text)
         return self.response
 
 
-def make_client(service: StubAnalyticsService) -> TestClient:
+def make_client(application: Any) -> TestClient:
     app = create_app()
-    app.dependency_overrides[get_analytics_service] = lambda: service
+    app.dependency_overrides[get_analytics_application] = lambda: application
     return TestClient(app)
 
 
@@ -35,16 +45,24 @@ def test_health_endpoint() -> None:
 
 
 def test_analytics_query_success_uses_dependency_service() -> None:
-    service = StubAnalyticsService(
-        AnalyticalQueryResponse(
+    application = StubAnalyticsApplication(
+        AnalyticalResponse(
             success=True,
+            status=AnalyticalResponseStatus.SUCCESS,
+            query=QueryContext(metrics=["gross_sales"]),
+            metadata=ResponseMetadata(
+                metrics=[
+                    MetricMetadata(
+                        metric="gross_sales",
+                        label="Gross Sales",
+                    )
+                ],
+                row_count=1,
+            ),
             data=[{"gross_sales": 15990.0}],
-            row_count=1,
-            columns=["gross_sales"],
-            query=QueryRequest(metrics=("gross_sales",)),
         )
     )
-    client = make_client(service)
+    client = make_client(application)
 
     response = client.post(
         "/analytics/query",
@@ -52,7 +70,7 @@ def test_analytics_query_success_uses_dependency_service() -> None:
     )
 
     assert response.status_code == 200
-    assert service.questions == ["What were total sales?"]
+    assert application.questions == ["What were total sales?"]
     assert response.json() == {
         "success": True,
         "status": "success",
@@ -74,34 +92,33 @@ def test_analytics_query_success_uses_dependency_service() -> None:
 
 
 def test_analytics_query_semantic_failure_returns_422() -> None:
-    service = StubAnalyticsService(
-        AnalyticalQueryResponse(
-            success=False,
-            error="unknown metric: foo",
-            error_stage="semantic_resolution",
-        )
-    )
-    client = make_client(service)
+    class FailingApplication:
+        def query(self, text: str) -> AnalyticalResponse:
+            raise SemanticResolutionError(
+                (ResolutionResult.not_found("metric", "foo", "unknown metric: foo"),)
+            )
+
+    client = make_client(FailingApplication())
 
     response = client.post("/analytics/query", json={"question": "what is foo?"})
 
     assert response.status_code == 422
     assert response.json()["detail"] == {
         "code": "SEMANTIC_RESOLUTION_FAILED",
-        "message": "unknown metric: foo",
+        "message": (
+            "Semantic resolution failed (1 issue(s)): "
+            "metric: unknown metric: foo"
+        ),
         "stage": "semantic_resolution",
     }
 
 
 def test_analytics_query_execution_failure_hides_internal_message() -> None:
-    service = StubAnalyticsService(
-        AnalyticalQueryResponse(
-            success=False,
-            error="connection refused at 10.0.0.5",
-            error_stage="query_execution",
-        )
-    )
-    client = make_client(service)
+    class FailingApplication:
+        def query(self, text: str) -> AnalyticalResponse:
+            raise QueryExecutionFailedError("connection refused at 10.0.0.5")
+
+    client = make_client(FailingApplication())
 
     response = client.post("/analytics/query", json={"question": "total sales"})
 

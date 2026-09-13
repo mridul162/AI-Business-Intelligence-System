@@ -1,24 +1,25 @@
 """Unit tests for etl.analytics.response.builder.
 
-get_metric is faked as a simple dict lookup function — this proves the
-builder's shaping logic without depending on the real, growing
-METRIC_REGISTRY in etl/analytics/metrics/registry.py.
+The response builder consumes the canonical AnalyticalQueryRequest and
+AnalyticalResult contracts. Metric lookup is faked as a simple dict
+lookup function so these tests verify response-shaping logic without
+depending on the real METRIC_REGISTRY.
 """
 
 from __future__ import annotations
 
 from etl.analytics.metrics.definitions import MetricDefinition
-from etl.analytics.query.models import (
-    FilterOperator,
-    QueryFilter,
-    QueryRequest,
-)
+from etl.analytics.orchestration import AnalyticalResult
+from etl.analytics.planner.query_plan import MergeStrategy
 from etl.analytics.response.builder import AnalyticalResponseBuilder
 from etl.analytics.response.models import AnalyticalResponseStatus
-from etl.analytics.service.models import AnalyticalQueryResponse
+from etl.analytics.schemas import AnalyticalQueryRequest, FilterCondition
 
 
-def make_metric_definition(name: str, display_name: str) -> MetricDefinition:
+def make_metric_definition(
+    name: str,
+    display_name: str,
+) -> MetricDefinition:
     """Build a minimal-but-valid MetricDefinition for tests."""
 
     return MetricDefinition(
@@ -30,15 +31,27 @@ def make_metric_definition(name: str, display_name: str) -> MetricDefinition:
         expression=f"SUM({name})",
         filters=(),
         supported_dimensions=(),
-        supported_time_grains=("daily", "weekly", "monthly", "quarterly", "yearly"),
+        supported_time_grains=(
+            "daily",
+            "weekly",
+            "monthly",
+            "quarterly",
+            "yearly",
+        ),
         output_field=name,
     )
 
 
 def make_fake_get_metric():
     definitions = {
-        "total_sales": make_metric_definition("total_sales", "Total Sales"),
-        "total_purchases": make_metric_definition("total_purchases", "Total Purchases"),
+        "total_sales": make_metric_definition(
+            "total_sales",
+            "Total Sales",
+        ),
+        "total_purchases": make_metric_definition(
+            "total_purchases",
+            "Total Purchases",
+        ),
     }
 
     def get_metric(metric_name: str) -> MetricDefinition:
@@ -47,155 +60,187 @@ def make_fake_get_metric():
     return get_metric
 
 
+def make_result(
+    rows: tuple[dict, ...] = (),
+    columns: tuple[str, ...] = (),
+) -> AnalyticalResult:
+    """Build a canonical single-query AnalyticalResult."""
+
+    return AnalyticalResult(
+        columns=columns,
+        rows=rows,
+        row_count=len(rows),
+        merge_strategy=MergeStrategy.NONE,
+    )
+
+
 class TestSuccessResponse:
     def test_rows_present_yields_success_status(self) -> None:
         builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=True,
-            data=[{"month": "2026-08", "total_sales": 15990.0}],
-            row_count=1,
-            columns=["month", "total_sales"],
-            query=QueryRequest(metrics=("total_sales",), dimensions=("month",)),
+
+        request = AnalyticalQueryRequest(
+            metric="total_sales",
+            dimensions=("month",),
         )
 
-        response = builder.build(service_result)
+        result = make_result(
+            rows=(
+                {
+                    "month": "2026-08",
+                    "total_sales": 15990.0,
+                },
+            ),
+            columns=("month", "total_sales"),
+        )
+
+        response = builder.build(request, result)
 
         assert response.success is True
         assert response.status == AnalyticalResponseStatus.SUCCESS
-        assert response.data == [{"month": "2026-08", "total_sales": 15990.0}]
+        assert response.data == [
+            {
+                "month": "2026-08",
+                "total_sales": 15990.0,
+            }
+        ]
         assert response.error is None
 
     def test_row_field_names_are_preserved_not_renamed(self) -> None:
         builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=True,
-            data=[{"month": "2026-08", "total_sales": 15990.0}],
-            row_count=1,
-            query=QueryRequest(metrics=("total_sales",), dimensions=("month",)),
+
+        request = AnalyticalQueryRequest(
+            metric="total_sales",
+            dimensions=("month",),
         )
 
-        response = builder.build(service_result)
+        result = make_result(
+            rows=(
+                {
+                    "month": "2026-08",
+                    "total_sales": 15990.0,
+                },
+            ),
+            columns=("month", "total_sales"),
+        )
 
-        # Keys stay as the original query output field names —
-        # no "Month" / "Total Sales" display-label renaming here.
-        assert list(response.data[0].keys()) == ["month", "total_sales"]
+        response = builder.build(request, result)
+
+        # Keys stay as the original query output field names.
+        # No display-label renaming happens in this layer.
+        assert list(response.data[0].keys()) == [
+            "month",
+            "total_sales",
+        ]
 
 
 class TestEmptyResponse:
     def test_zero_rows_yields_empty_status_and_is_still_success(self) -> None:
         builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=True,
-            data=[],
-            row_count=0,
-            columns=["total_sales"],
-            query=QueryRequest(
-                metrics=("total_sales",),
-                filters=(
-                    QueryFilter(
-                        dimension="date",
-                        operator=FilterOperator.BETWEEN,
-                        value=["2025-01-01", "2025-01-31"],
-                    ),
+
+        request = AnalyticalQueryRequest(
+            metric="total_sales",
+            filters=(
+                FilterCondition(
+                    dimension="date",
+                    operator="between",
+                    value=["2025-01-01", "2025-01-31"],
                 ),
             ),
         )
 
-        response = builder.build(service_result)
+        result = make_result(
+            rows=(),
+            columns=("total_sales",),
+        )
+
+        response = builder.build(request, result)
 
         assert response.success is True
         assert response.status == AnalyticalResponseStatus.EMPTY
         assert response.data == []
         assert response.error is None
+        assert response.metadata is not None
         assert response.metadata.row_count == 0
 
 
-class TestErrorResponse:
-    def test_failed_service_result_yields_error_status(self) -> None:
-        builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=False,
-            error="Failed to execute analytical query.",
-            error_stage="query_execution",
-        )
-
-        response = builder.build(service_result)
-
-        assert response.success is False
-        assert response.status == AnalyticalResponseStatus.ERROR
-        assert response.data == []
-        assert response.error is not None
-        assert response.error.code == "QUERY_EXECUTION_FAILED"
-        assert response.error.stage == "query_execution"
-
-    def test_error_response_has_no_query_or_metadata(self) -> None:
-        builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=False,
-            error="unknown metric",
-            error_stage="semantic_resolution",
-        )
-
-        response = builder.build(service_result)
-
-        assert response.query is None
-        assert response.metadata is None
-
-    def test_unrecognized_stage_falls_back_to_unknown_error_code(self) -> None:
-        builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=False,
-            error="something odd",
-            error_stage=None,
-        )
-
-        response = builder.build(service_result)
-
-        assert response.error.code == "UNKNOWN_ERROR"
-
-
 class TestMetricMetadata:
-    def test_metadata_uses_display_name_from_registry_not_hardcoded(self) -> None:
+    def test_metadata_uses_display_name_from_registry_not_hardcoded(
+        self,
+    ) -> None:
         builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=True,
-            data=[{"total_purchases": 500.0}],
-            row_count=1,
-            query=QueryRequest(metrics=("total_purchases",)),
+
+        request = AnalyticalQueryRequest(
+            metric="total_purchases",
         )
 
-        response = builder.build(service_result)
+        result = make_result(
+            rows=(
+                {
+                    "total_purchases": 500.0,
+                },
+            ),
+            columns=("total_purchases",),
+        )
 
+        response = builder.build(request, result)
+
+        assert response.metadata is not None
         assert len(response.metadata.metrics) == 1
+
         metric_meta = response.metadata.metrics[0]
+
         assert metric_meta.metric == "total_purchases"
         assert metric_meta.label == "Total Purchases"
 
-    def test_unit_is_none_since_metric_definition_has_no_unit_field(self) -> None:
+    def test_unit_is_none_since_metric_definition_has_no_unit_field(
+        self,
+    ) -> None:
         builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=True,
-            data=[{"total_sales": 15990.0}],
-            row_count=1,
-            query=QueryRequest(metrics=("total_sales",)),
+
+        request = AnalyticalQueryRequest(
+            metric="total_sales",
         )
 
-        response = builder.build(service_result)
+        result = make_result(
+            rows=(
+                {
+                    "total_sales": 15990.0,
+                },
+            ),
+            columns=("total_sales",),
+        )
 
+        response = builder.build(request, result)
+
+        assert response.metadata is not None
         assert response.metadata.metrics[0].unit is None
 
     def test_multiple_metrics_each_resolve_independently(self) -> None:
         builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=True,
-            data=[{"total_sales": 15990.0, "total_purchases": 500.0}],
-            row_count=1,
-            query=QueryRequest(metrics=("total_sales", "total_purchases")),
+
+        request = AnalyticalQueryRequest(
+            metric="total_sales",
+            additional_metrics=("total_purchases",),
         )
 
-        response = builder.build(service_result)
+        result = make_result(
+            rows=(
+                {
+                    "total_sales": 15990.0,
+                    "total_purchases": 500.0,
+                },
+            ),
+            columns=("total_sales", "total_purchases"),
+        )
 
-        labels = {m.metric: m.label for m in response.metadata.metrics}
+        response = builder.build(request, result)
+
+        assert response.metadata is not None
+        labels = {
+            metric.metric: metric.label
+            for metric in response.metadata.metrics
+        }
+
         assert labels == {
             "total_sales": "Total Sales",
             "total_purchases": "Total Purchases",
@@ -203,64 +248,162 @@ class TestMetricMetadata:
 
 
 class TestQueryContextPreservation:
-    def test_preserves_metrics_dimensions_filters_time_grain(self) -> None:
+    def test_preserves_metrics_dimensions_filters_time_grain(
+        self,
+    ) -> None:
         builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=True,
-            data=[{"customer_name": "Customer A", "total_sales": 5000.0}],
-            row_count=1,
-            query=QueryRequest(
-                metrics=("total_sales",),
-                dimensions=("customer_name",),
-                time_grain="monthly",
-                filters=(
-                    QueryFilter(
-                        dimension="region",
-                        operator=FilterOperator.EQ,
-                        value="Dhaka",
-                    ),
+
+        request = AnalyticalQueryRequest(
+            metric="total_sales",
+            dimensions=("customer_name",),
+            time_grain="monthly",
+            filters=(
+                FilterCondition(
+                    dimension="region",
+                    operator="eq",
+                    value="Dhaka",
                 ),
             ),
         )
 
-        response = builder.build(service_result)
+        result = make_result(
+            rows=(
+                {
+                    "customer_name": "Customer A",
+                    "total_sales": 5000.0,
+                },
+            ),
+            columns=("customer_name", "total_sales"),
+        )
 
+        response = builder.build(request, result)
+
+        assert response.query is not None
         assert response.query.metrics == ["total_sales"]
         assert response.query.dimensions == ["customer_name"]
         assert response.query.time_grain == "monthly"
         assert response.query.filters == [
-            {"field": "region", "operator": "eq", "value": "Dhaka"}
+            {
+                "field": "region",
+                "operator": "eq",
+                "value": "Dhaka",
+            }
         ]
 
-    def test_missing_query_context_falls_back_to_empty_context(self) -> None:
+    def test_additional_metrics_are_preserved_in_query_context(
+        self,
+    ) -> None:
         builder = AnalyticalResponseBuilder(make_fake_get_metric())
-        service_result = AnalyticalQueryResponse(
-            success=True,
-            data=[],
-            row_count=0,
-            query=None,
+
+        request = AnalyticalQueryRequest(
+            metric="total_sales",
+            additional_metrics=("total_purchases",),
         )
 
-        response = builder.build(service_result)
+        result = make_result(
+            rows=(
+                {
+                    "total_sales": 15990.0,
+                    "total_purchases": 500.0,
+                },
+            ),
+            columns=("total_sales", "total_purchases"),
+        )
 
-        assert response.query.metrics == []
-        assert response.metadata.metrics == []
+        response = builder.build(request, result)
+
+        assert response.query is not None
+        assert response.query.metrics == [
+            "total_sales",
+            "total_purchases",
+        ]
+
+    def test_empty_result_still_preserves_query_context(self) -> None:
+        builder = AnalyticalResponseBuilder(make_fake_get_metric())
+
+        request = AnalyticalQueryRequest(
+            metric="total_sales",
+            dimensions=("customer_name",),
+            time_grain="monthly",
+        )
+
+        result = make_result(
+            rows=(),
+            columns=("customer_name", "total_sales"),
+        )
+
+        response = builder.build(request, result)
+
+        assert response.query is not None
+        assert response.query.metrics == ["total_sales"]
+        assert response.query is not None
+        assert response.query.dimensions == ["customer_name"]
+        assert response.query.time_grain == "monthly"
+        assert response.metadata is not None
+        assert response.metadata.row_count == 0
+
+
+class TestMergeStrategy:
+    def test_multi_query_result_is_passed_through_without_reformatting(
+        self,
+    ) -> None:
+        builder = AnalyticalResponseBuilder(make_fake_get_metric())
+
+        request = AnalyticalQueryRequest(
+            metric="total_sales",
+            additional_metrics=("total_purchases",),
+        )
+
+        result = AnalyticalResult(
+            columns=("total_sales", "total_purchases"),
+            rows=(
+                {
+                    "total_sales": 15990.0,
+                    "total_purchases": 500.0,
+                },
+            ),
+            row_count=1,
+            merge_strategy=MergeStrategy.COMPARE_METRICS,
+        )
+
+        response = builder.build(request, result)
+
+        assert response.success is True
+        assert response.data == [
+            {
+                "total_sales": 15990.0,
+                "total_purchases": 500.0,
+            }
+        ]
+
+        # Response builder does not expose or reinterpret merge strategy.
+        # It only transforms the canonical result into the public response.
+        assert response.metadata is not None
+        assert response.metadata.row_count == 1
 
 
 class TestRealRegistryIntegration:
-    """A light smoke test against the actual METRIC_REGISTRY, so a typo
-    in a real metric name (e.g. in a future semantic resolver) would
-    surface here instead of only in production."""
+    """Light smoke test against the actual METRIC_REGISTRY."""
 
     def test_uses_real_registry_by_default(self) -> None:
         builder = AnalyticalResponseBuilder()
-        service_result = AnalyticalQueryResponse(
-            success=True,
-            data=[{"gross_sales": 15990.0}],
-            row_count=1,
-            query=QueryRequest(metrics=("gross_sales",)),
+
+        request = AnalyticalQueryRequest(
+            metric="gross_sales",
         )
 
-        response = builder.build(service_result)
+        result = make_result(
+            rows=(
+                {
+                    "gross_sales": 15990.0,
+                },
+            ),
+            columns=("gross_sales",),
+        )
 
+        response = builder.build(request, result)
+
+        assert response.metadata is not None
+        assert response.metadata.metrics[0].metric == "gross_sales"
+        assert response.metadata is not None
         assert response.metadata.metrics[0].label == "Gross Sales"

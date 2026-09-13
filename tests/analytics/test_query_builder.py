@@ -34,7 +34,7 @@ class TestAggregationCorrectness(unittest.TestCase):
         self.assertIn("SUM(gross_sales)", compiled.sql)
 
     def test_count_distinct_metric(self) -> None:
-        compiled = build_query(QueryRequest(metrics=("total_orders",)))
+        compiled = build_query(QueryRequest(metrics=("number_of_orders",)))
         self.assertIn("COUNT(DISTINCT order_id)", compiled.sql)
 
     def test_conditional_aggregation_for_metrics_with_builtin_filters(self) -> None:
@@ -48,7 +48,7 @@ class TestAggregationCorrectness(unittest.TestCase):
 
     def test_partner_capital_in_out_use_transaction_type_not_direction(self) -> None:
         compiled = build_query(
-            QueryRequest(metrics=("partner_capital_in", "partner_capital_out"))
+            QueryRequest(metrics=("capital_invested", "capital_withdrawn"))
         )
         self.assertIn("transaction_type = 'CAPITAL'", compiled.sql)
         self.assertIn("transaction_type = 'WITHDRAWAL'", compiled.sql)

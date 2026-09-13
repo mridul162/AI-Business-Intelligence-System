@@ -1,1 +1,1 @@
-"""API request and response schemas."""
+"""API request/response schemas."""
