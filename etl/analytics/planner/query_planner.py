@@ -135,7 +135,7 @@ def _build_query_plan(group: _Group, request: Any) -> QueryPlan:
     module docstring for why registry fixed filters are deliberately
     left out here and applied later by the SQL Builder instead.
     """
-    user_filters: tuple[PlanFilter, ...] = tuple(getattr(request, "filters", ()) or ())
+    user_filters = _request_filters(request)
 
     return QueryPlan(
         source_view=group.source_view,
@@ -148,6 +148,29 @@ def _build_query_plan(group: _Group, request: Any) -> QueryPlan:
         sort_order=getattr(request, "sort_order", None),
         limit=getattr(request, "limit", None),
     )
+
+
+def _request_filters(request: Any) -> tuple[PlanFilter, ...]:
+    """Normalize phase-9 filter conditions to the planner contract."""
+
+    filters: list[PlanFilter] = []
+    for filter_condition in getattr(request, "filters", ()) or ():
+        field = getattr(filter_condition, "field", None)
+        if field is None:
+            field = getattr(filter_condition, "dimension")
+
+        operator = getattr(filter_condition, "operator")
+        if hasattr(operator, "value"):
+            operator = operator.value
+
+        filters.append(
+            PlanFilter(
+                field=field,
+                operator=operator,
+                value=getattr(filter_condition, "value"),
+            )
+        )
+    return tuple(filters)
 
 
 # --------------------------------------------------------------------
@@ -178,7 +201,11 @@ def plan_query(
         query, otherwise a MultiQueryPlan with an appropriate
         MergeStrategy.
     """
-    metric_names: Iterable[str] = getattr(request, "metrics")
+    metric_names: Iterable[str] = getattr(
+        request,
+        "metrics",
+        getattr(request, "all_metrics", ()),
+    )
     if not metric_names:
         raise ValueError("plan_query requires at least one metric.")
 

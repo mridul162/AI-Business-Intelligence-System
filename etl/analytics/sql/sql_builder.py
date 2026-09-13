@@ -16,6 +16,7 @@ from sqlalchemy.sql import Select
 from etl.analytics.metrics.definitions import MetricDefinition
 from etl.analytics.metrics.registry import get_metric as _default_get_metric
 from etl.analytics.planner.query_plan import QueryPlan
+from etl.analytics.query.time_grains import VIEW_PRIMARY_DATE_COLUMN
 
 from . import clauses
 from .errors import (
@@ -44,10 +45,7 @@ GetMetric = Callable[[str], MetricDefinition]
 # empty rather than guessing column names I can't verify against your
 # schema, since a wrong guess would fail silently different (a real
 # but wrong column) rather than loudly.
-TIME_COLUMN_BY_SOURCE_VIEW: dict[str, str] = {
-    # "analytics.v_sales": "sale_date",
-    # "analytics.v_cash_transactions": "transaction_date",
-}
+TIME_COLUMN_BY_SOURCE_VIEW: dict[str, str] = dict(VIEW_PRIMARY_DATE_COLUMN)
 
 TIME_BUCKET_ALIAS = "period"
 

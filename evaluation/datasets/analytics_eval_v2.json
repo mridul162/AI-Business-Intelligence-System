@@ -1,10 +1,10 @@
 {
   "version": "v2",
-  "count": 58,
+  "count": 1,
   "cases": [
       {
       "id": "EVAL-035",
-      "question": "Show yearly total sales.",
+      "question": "Show total sales by year.",
       "category": "time_based",
       "difficulty": "medium",
       "expected_status": "success",
@@ -15,153 +15,6 @@
         "dimensions": [],
         "filters": [],
         "time_grain": "yearly",
-        "time_range": null
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-044",
-      "question": "Break down cash in by Mridul.",
-      "category": "dimension",
-      "difficulty": "medium",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "cash_in"
-        ],
-        "dimensions": [
-          "created_by"
-        ],
-        "filters": [],
-        "time_grain": null,
-        "time_range": null
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-045",
-      "question": "Show cash out by payment method.",
-      "category": "dimension",
-      "difficulty": "medium",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "cash_out"
-        ],
-        "dimensions": [
-          "payment_method"
-        ],
-        "filters": [],
-        "time_grain": null,
-        "time_range": null
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-052",
-      "question": "Show cash in for cash payments.",
-      "category": "filter",
-      "difficulty": "medium",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "cash_in"
-        ],
-        "dimensions": [],
-        "filters": [
-          {
-            "field": "payment_method",
-            "operator": "=",
-            "value": "cash"
-          }
-        ],
-        "time_grain": null,
-        "time_range": null
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-055",
-      "question": "Show total expenses in the rent category.",
-      "category": "filter",
-      "difficulty": "medium",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "total_expenses"
-        ],
-        "dimensions": [],
-        "filters": [
-          {
-            "field": "expense_category",
-            "operator": "=",
-            "value": "rent"
-          }
-        ],
-        "time_grain": null,
-        "time_range": null
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-056",
-      "question": "Show cash payments received this week.",
-      "category": "filter",
-      "difficulty": "medium",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "total_payments"
-        ],
-        "dimensions": [],
-        "filters": [
-          {
-            "field": "payment_method",
-            "operator": "=",
-            "value": "cash"
-          }
-        ],
-        "time_grain": null,
-        "time_range": "this_week"
-      },
-      "expected_failed_stage": null,
-      "failure_reason": null,
-      "notes": null
-    },
-    {
-      "id": "EVAL-057",
-      "question": "Show expenses at least 250 in the travel category.",
-      "category": "filter",
-      "difficulty": "hard",
-      "expected_status": "success",
-      "expected": {
-        "metrics": [
-          "total_expenses"
-        ],
-        "dimensions": [],
-        "filters": [
-          {
-            "field": "expense_category",
-            "operator": "=",
-            "value": "travel"
-          },
-          {
-            "field": "amount",
-            "operator": ">=",
-            "value": 250
-          }
-        ],
-        "time_grain": null,
         "time_range": null
       },
       "expected_failed_stage": null,

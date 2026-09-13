@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import pytest
 
-from etl.analytics.query.models import (
-    FilterOperator,
-    QueryFilter,
-    QueryRequest,
+from etl.analytics.response.models import (
+    AnalyticalResponse,
+    AnalyticalResponseStatus,
+    QueryContext,
 )
+from etl.analytics.semantic.models import ResolutionResult, SemanticResolutionError
 from evaluation.runners.evaluation_runner import EvaluationRunner
 from evaluation.schemas.evaluation_case import (
     Difficulty,
@@ -17,6 +16,7 @@ from evaluation.schemas.evaluation_case import (
     ExpectedFilter,
     ExpectedOutput,
     ExpectedStatus,
+    FailureStage,
 )
 
 
@@ -25,30 +25,22 @@ from evaluation.schemas.evaluation_case import (
 # -------------------------------------------------------------------
 
 
-@dataclass
-class FakeResponse:
-    success: bool
-    query: QueryRequest | None = None
-    error_stage: str | None = None
-    error: str | None = None
-
-
-class FakeAnalyticalQueryService:
+class FakeAnalyticsApplication:
     def __init__(
-        self,
-        response: FakeResponse | None = None,
+        self, response: AnalyticalResponse | None = None,
         exception: Exception | None = None,
     ) -> None:
         self.response = response
         self.exception = exception
         self.questions: list[str] = []
 
-    def query(self, text: str):
-        self.questions.append(text)
+    def query(self, question: str) -> AnalyticalResponse:
+        self.questions.append(question)
 
         if self.exception is not None:
             raise self.exception
 
+        assert self.response is not None
         return self.response
 
 
@@ -83,21 +75,17 @@ def evaluation_case() -> EvaluationCase:
 def test_run_case_passes_when_actual_matches_expected(
     evaluation_case: EvaluationCase,
 ) -> None:
-    query = QueryRequest(
-        metrics=("net_sales",),
-        dimensions=(),
-        filters=(),
-        time_grain=None,
-    )
+    query = QueryContext(metrics=["net_sales"])
 
-    service = FakeAnalyticalQueryService(
-        response=FakeResponse(
+    application = FakeAnalyticsApplication(
+        response=AnalyticalResponse(
             success=True,
+            status=AnalyticalResponseStatus.SUCCESS,
             query=query,
         )
     )
 
-    runner = EvaluationRunner(service) # type: ignore
+    runner = EvaluationRunner(application)
 
     result = runner.run_case(evaluation_case)
 
@@ -113,7 +101,7 @@ def test_run_case_passes_when_actual_matches_expected(
     assert result.error is None
     assert result.latency_ms >= 0 # type: ignore
 
-    assert service.questions == [
+    assert application.questions == [
         "What were the net sales last month?"
     ]
 
@@ -126,21 +114,17 @@ def test_run_case_passes_when_actual_matches_expected(
 def test_run_case_fails_when_actual_does_not_match_expected(
     evaluation_case: EvaluationCase,
 ) -> None:
-    query = QueryRequest(
-        metrics=("total_expenses",),
-        dimensions=(),
-        filters=(),
-        time_grain=None,
-    )
+    query = QueryContext(metrics=["total_expenses"])
 
-    service = FakeAnalyticalQueryService(
-        response=FakeResponse(
+    application = FakeAnalyticsApplication(
+        response=AnalyticalResponse(
             success=True,
+            status=AnalyticalResponseStatus.SUCCESS,
             query=query,
         )
     )
 
-    runner = EvaluationRunner(service) # type: ignore
+    runner = EvaluationRunner(application)
 
     result = runner.run_case(evaluation_case)
 
@@ -166,15 +150,17 @@ def test_run_case_fails_when_actual_does_not_match_expected(
 def test_run_case_records_pipeline_failure(
     evaluation_case: EvaluationCase,
 ) -> None:
-    service = FakeAnalyticalQueryService(
-        response=FakeResponse(
-            success=False,
-            error_stage="semantic_resolution",
-            error="Could not resolve metric 'sales'.",
+    application = FakeAnalyticsApplication(
+        exception=SemanticResolutionError(
+            (
+                ResolutionResult.not_found(
+                    "metric", "sales", "Could not resolve metric 'sales'."
+                ),
+            )
         )
     )
 
-    runner = EvaluationRunner(service) # type: ignore
+    runner = EvaluationRunner(application)
 
     result = runner.run_case(evaluation_case)
 
@@ -182,8 +168,36 @@ def test_run_case_records_pipeline_failure(
     assert result.actual_status == "failure"
     assert result.field_diffs == []
     assert result.actual_failed_stage == "semantic_resolution"
-    assert result.error == "Could not resolve metric 'sales'."
+    assert result.error == (
+        "Semantic resolution failed (1 issue(s)): "
+        "metric: Could not resolve metric 'sales'."
+    )
     assert result.latency_ms >= 0 # type: ignore
+
+
+def test_run_case_classifies_time_resolution_failure(
+    evaluation_case: EvaluationCase,
+) -> None:
+    application = FakeAnalyticsApplication(
+        exception=SemanticResolutionError(
+            (
+                ResolutionResult.not_found(
+                    "time_range", "next month", "unsupported time range"
+                ),
+            )
+        )
+    )
+    case = evaluation_case.model_copy(
+        update={
+            "expected_status": ExpectedStatus.FAILURE,
+            "expected": None,
+            "expected_failed_stage": FailureStage.TIME_RESOLUTION,
+        }
+    )
+
+    result = EvaluationRunner(application).run_case(case)
+
+    assert result.actual_failed_stage == "time_resolution"
 
 
 # -------------------------------------------------------------------
@@ -194,11 +208,11 @@ def test_run_case_records_pipeline_failure(
 def test_run_case_records_unexpected_exception(
     evaluation_case: EvaluationCase,
 ) -> None:
-    service = FakeAnalyticalQueryService(
+    application = FakeAnalyticsApplication(
         exception=RuntimeError("Database connection lost.")
     )
 
-    runner = EvaluationRunner(service) # type: ignore
+    runner = EvaluationRunner(application)
 
     result = runner.run_case(evaluation_case)
 
@@ -240,24 +254,22 @@ def test_run_case_normalizes_filter_operator(
         ),
     )
 
-    query = QueryRequest(
-        metrics=("net_sales",),
-        dimensions=(),
-        filters=(
-            QueryFilter(
-                dimension="payment_method",
-                operator=FilterOperator.EQ,
-                value="cash",
-            ),
-        ),
-        time_grain=None,
+    query = QueryContext(
+        metrics=["net_sales"],
+        filters=[
+            {"field": "payment_method", "operator": "eq", "value": "cash"}
+        ],
     )
 
-    service = FakeAnalyticalQueryService(
-        response=FakeResponse(success=True, query=query)
+    application = FakeAnalyticsApplication(
+        response=AnalyticalResponse(
+            success=True,
+            status=AnalyticalResponseStatus.SUCCESS,
+            query=query,
+        )
     )
 
-    runner = EvaluationRunner(service) # type: ignore
+    runner = EvaluationRunner(application)
 
     result = runner.run_case(case)
 
@@ -276,21 +288,17 @@ def test_run_case_normalizes_filter_operator(
 def test_run_cases_returns_result_for_every_case(
     evaluation_case: EvaluationCase,
 ) -> None:
-    matching_query = QueryRequest(
-        metrics=("net_sales",),
-        dimensions=(),
-        filters=(),
-        time_grain=None,
-    )
+    matching_query = QueryContext(metrics=["net_sales"])
 
-    service = FakeAnalyticalQueryService(
-        response=FakeResponse(
+    application = FakeAnalyticsApplication(
+        response=AnalyticalResponse(
             success=True,
+            status=AnalyticalResponseStatus.SUCCESS,
             query=matching_query,
         )
     )
 
-    runner = EvaluationRunner(service) # type: ignore
+    runner = EvaluationRunner(application)
 
     second_case = EvaluationCase(
         id="eval_002",
@@ -316,7 +324,7 @@ def test_run_cases_returns_result_for_every_case(
     assert results[1].case_id == "eval_002"
     assert all(result.passed for result in results)
 
-    assert service.questions == [
+    assert application.questions == [
         evaluation_case.question,
         second_case.question,
     ]

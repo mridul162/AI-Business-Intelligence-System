@@ -8,11 +8,21 @@ produces structured evaluation results.
 from __future__ import annotations
 
 import time
-from typing import Any, Iterable
+from typing import Any, Iterable, Protocol
 
-from etl.analytics.service.analytical_query_service import (
-    AnalyticalQueryService,
+from etl.analytics.executor.errors import (
+    DatabaseConnectionError,
+    QueryExecutionFailedError,
 )
+from etl.analytics.nl_query.exceptions import (
+    InvalidQuestionError,
+    LLMCallError,
+    LLMResponseFormatError,
+    LLMResponseValidationError,
+)
+from etl.analytics.response.models import AnalyticalResponse
+from etl.analytics.semantic.models import SemanticResolutionError
+from etl.analytics.sql.errors import SQLBuilderError
 
 from evaluation.schemas.evaluation_case import EvaluationCase
 from evaluation.schemas.evaluation_result import EvaluationResult, FieldDiff
@@ -28,11 +38,15 @@ _SYMBOL_TO_OPERATOR_NAME = {
 }
 
 
-class EvaluationRunner:
-    """Run analytical evaluation cases against an AnalyticalQueryService."""
+class AnalyticsApplicationLike(Protocol):
+    def query(self, question: str) -> AnalyticalResponse: ...
 
-    def __init__(self, service: AnalyticalQueryService) -> None:
-        self.service = service
+
+class EvaluationRunner:
+    """Run analytical evaluation cases against AnalyticsApplication."""
+
+    def __init__(self, application: AnalyticsApplicationLike) -> None:
+        self.application = application
 
     def run_case(self, case: EvaluationCase) -> EvaluationResult:
         """Run one evaluation case and return its structured result."""
@@ -40,10 +54,19 @@ class EvaluationRunner:
         start_time = time.perf_counter()
 
         try:
-            response = self.service.query(case.question)
+            response = self.application.query(case.question)
 
         except Exception as exc:
             latency_ms = self._elapsed_ms(start_time)
+
+            failure_stage = self._failure_stage(exc)
+            if failure_stage is not None:
+                return self._build_pipeline_failure_result(
+                    case=case,
+                    error=str(exc),
+                    failure_stage=failure_stage,
+                    latency_ms=latency_ms,
+                )
 
             return self._build_unexpected_error_result(
                 case=case,
@@ -52,13 +75,6 @@ class EvaluationRunner:
             )
 
         latency_ms = self._elapsed_ms(start_time)
-
-        if not response.success:
-            return self._evaluate_pipeline_failure(
-                case=case,
-                response=response,
-                latency_ms=latency_ms,
-            )
 
         return self._evaluate_success(
             case=case,
@@ -149,21 +165,21 @@ class EvaluationRunner:
             latency_ms=latency_ms,
         )
 
-    def _evaluate_pipeline_failure(
+    def _build_pipeline_failure_result(
         self,
         *,
         case: EvaluationCase,
-        response: Any,
+        error: str,
+        failure_stage: str,
         latency_ms: float,
     ) -> EvaluationResult:
-        """Evaluate a pipeline response that failed."""
+        """Evaluate a typed exception raised by the application pipeline."""
 
-        actual_failed_stage = response.error_stage
         expected_failed_stage = self._expected_failed_stage(case)
 
         passed = (
             case.expected_status.value == "failure"
-            and actual_failed_stage == expected_failed_stage
+            and failure_stage == expected_failed_stage
         )
 
         if case.expected_status.value == "success":
@@ -175,7 +191,7 @@ class EvaluationRunner:
                 "an expected failure stage"
             )
 
-        elif actual_failed_stage != expected_failed_stage:
+        elif failure_stage != expected_failed_stage:
             reason = (
                 "pipeline failed at a different stage than expected"
             )
@@ -191,13 +207,40 @@ class EvaluationRunner:
             expected_status=case.expected_status.value,
             actual_status="failure",
             passed=passed,
-            actual_failed_stage=actual_failed_stage,
+            actual_failed_stage=failure_stage,
             expected_failed_stage=expected_failed_stage,
             field_diffs=[],
-            error=response.error,
+            error=error,
             reason=reason,
             latency_ms=latency_ms,
         )
+
+    @staticmethod
+    def _failure_stage(exception: Exception) -> str | None:
+        """Map new-architecture exceptions to evaluation stages."""
+
+        if isinstance(
+            exception,
+            (
+                InvalidQuestionError,
+                LLMCallError,
+                LLMResponseFormatError,
+                LLMResponseValidationError,
+            ),
+        ):
+            return "parser"
+        if isinstance(exception, SemanticResolutionError):
+            if any(issue.field_name == "time_range" for issue in exception.issues):
+                return "time_resolution"
+            return "semantic_resolution"
+        if isinstance(exception, SQLBuilderError):
+            return "sql_compilation"
+        if isinstance(
+            exception,
+            (DatabaseConnectionError, QueryExecutionFailedError),
+        ):
+            return "execution"
+        return None
 
     def _build_unexpected_error_result(
         self,
@@ -287,7 +330,7 @@ class EvaluationRunner:
 
         if query is None:
             raise ValueError(
-                "Analytical service returned success=True but query=None."
+                "Analytics application returned success=True but query=None."
             )
 
         return {
@@ -295,13 +338,9 @@ class EvaluationRunner:
             "dimensions": list(query.dimensions),
             "filters": [
                 {
-                    "dimension": filt.dimension,
-                    "operator": (
-                        filt.operator.value
-                        if hasattr(filt.operator, "value")
-                        else filt.operator
-                    ),
-                    "value": filt.value,
+                    "dimension": filt["field"],
+                    "operator": filt["operator"],
+                    "value": filt["value"],
                 }
                 for filt in query.filters
             ],

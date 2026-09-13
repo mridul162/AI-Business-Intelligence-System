@@ -16,7 +16,7 @@ every result carries:
 
 This module has no dependency on any particular pipeline implementation --
 see evaluation/runners/evaluation_runner.py for the piece that adapts a
-real `AnalyticalQueryService` (or a mock) into this schema.
+real `AnalyticsApplication` (or a mock) into this schema.
 """
 
 from __future__ import annotations

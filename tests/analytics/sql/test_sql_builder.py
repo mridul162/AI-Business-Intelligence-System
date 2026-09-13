@@ -73,15 +73,11 @@ def test_two_compatible_metrics_same_view():
         metrics=("gross_sales",),
         time_grain="monthly",
     )
-    TIME_COLUMN_BY_SOURCE_VIEW["analytics.v_sales"] = "sale_date"
-    try:
-        built = build_query(plan)
-        sql = compiled(built.statement)
-        assert "date_trunc(" in sql and "sale_date) AS period" in sql
-        assert "GROUP BY date_trunc(" in sql
-        assert built.time_bucket_alias == "period"
-    finally:
-        TIME_COLUMN_BY_SOURCE_VIEW.pop("analytics.v_sales", None)
+    built = build_query(plan)
+    sql = compiled(built.statement)
+    assert "date_trunc(" in sql and "sale_date) AS period" in sql
+    assert "GROUP BY date_trunc(" in sql
+    assert built.time_bucket_alias == "period"
 
 
 def test_sort_and_limit():

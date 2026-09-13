@@ -22,7 +22,7 @@ which stage of parse() a failure came from:
                                   bad date string, etc.)
         │
         ▼
-    AnalyticalQueryRequest
+    
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ from __future__ import annotations
 
 class NLQueryParseError(Exception):
     """Base class for anything that goes wrong turning a natural
-    language question into an AnalyticalQueryRequest."""
+    language question into an ."""
 
 
 class InvalidQuestionError(NLQueryParseError):
@@ -52,7 +52,7 @@ class LLMResponseFormatError(NLQueryParseError):
 
 class LLMResponseValidationError(NLQueryParseError):
     """Raised when the LLM's response parses as JSON but doesn't
-    produce a structurally valid AnalyticalQueryRequest -- a missing
+    produce a structurally valid  -- a missing
     required field, an operator/preset/grain outside the known
     vocabulary, a malformed date string, etc. Wraps the underlying
     ValueError from the schema's own validation where applicable."""

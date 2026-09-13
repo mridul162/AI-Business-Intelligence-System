@@ -1,1 +1,0 @@
-"""Analytical query execution layer."""

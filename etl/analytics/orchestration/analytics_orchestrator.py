@@ -2,7 +2,7 @@
 Coordinates the existing planner/builder/executor/merger components
 into one deterministic execution workflow.
 
-    AnalyticalQueryRequest
+    
             v
        Query Planner  ->  QueryPlan | MultiQueryPlan
             v

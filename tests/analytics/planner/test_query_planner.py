@@ -6,6 +6,7 @@ import pytest
 from etl.analytics.metrics.definitions import MetricDefinition
 from etl.analytics.planner.query_plan import MergeStrategy, MultiQueryPlan, QueryPlan
 from etl.analytics.planner.query_planner import UnknownMetricError, plan_query
+from etl.analytics.schemas import AnalyticalQueryRequest, FilterCondition
 
 
 # --------------------------------------------------------------------
@@ -165,6 +166,22 @@ def test_user_filters_pass_through_to_query_plan():
 
     assert isinstance(result, QueryPlan)
     assert result.filters == (user_filter,)
+
+
+def test_phase_9_request_is_normalized_for_planning():
+    request = AnalyticalQueryRequest(
+        metric="total_sales",
+        additional_metrics=("net_sales",),
+        filters=(FilterCondition("region", "eq", "West"),),
+    )
+
+    result = plan_query(request, resolve_metric)
+
+    assert isinstance(result, QueryPlan)
+    assert result.metrics == ("total_sales", "net_sales")
+    assert result.filters[0].field == "region"
+    assert result.filters[0].operator == "eq"
+    assert result.filters[0].value == "West"
 
 
 # --------------------------------------------------------------------

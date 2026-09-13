@@ -9,7 +9,7 @@ Single responsibility:
     LLM structured extraction
             |
             v
-    AnalyticalQueryRequest        (ai.analytics.schemas)
+            (ai.analytics.schemas)
 
 This module deliberately does NOT:
   - resolve metric aliases against etl.analytics.metrics.registry (Phase 9.3)

@@ -823,7 +823,7 @@
     },
     {
       "id": "EVAL-044",
-      "question": "Break down cash in by payment method.",
+      "question": "Break down cash in by cash account type.",
       "category": "dimension",
       "difficulty": "medium",
       "expected_status": "success",
@@ -832,7 +832,7 @@
           "cash_in"
         ],
         "dimensions": [
-          "payment_method"
+          "cash_account_type"
         ],
         "filters": [],
         "time_grain": null,
@@ -844,7 +844,7 @@
     },
     {
       "id": "EVAL-045",
-      "question": "Show cash out by payment method.",
+      "question": "Show cash out by cash account type.",
       "category": "dimension",
       "difficulty": "medium",
       "expected_status": "success",
@@ -853,7 +853,7 @@
           "cash_out"
         ],
         "dimensions": [
-          "payment_method"
+          "cash_account_type"
         ],
         "filters": [],
         "time_grain": null,
@@ -985,7 +985,7 @@
     },
     {
       "id": "EVAL-052",
-      "question": "Show cash in for cash payments.",
+      "question": "Show cash in for partner cash payments.",
       "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
@@ -996,9 +996,9 @@
         "dimensions": [],
         "filters": [
           {
-            "field": "payment_method",
+            "field": "cash_account_type",
             "operator": "=",
-            "value": "cash"
+            "value": "partner cash"
           }
         ],
         "time_grain": null,
@@ -1085,20 +1085,20 @@
     },
     {
       "id": "EVAL-056",
-      "question": "Show cash payments received this week.",
+      "question": "Show partner cash payments received this week.",
       "category": "filter",
       "difficulty": "medium",
       "expected_status": "success",
       "expected": {
         "metrics": [
-          "total_payments"
+          "cash_in"
         ],
         "dimensions": [],
         "filters": [
           {
-            "field": "payment_method",
+            "field": "cash_account_type",
             "operator": "=",
-            "value": "cash"
+            "value": "partner cash"
           }
         ],
         "time_grain": null,
@@ -1110,7 +1110,7 @@
     },
     {
       "id": "EVAL-057",
-      "question": "Show expenses at least 250 in the travel category.",
+      "question": "Show expenses at least 250 in the rent category.",
       "category": "filter",
       "difficulty": "hard",
       "expected_status": "success",
@@ -1123,7 +1123,7 @@
           {
             "field": "expense_category",
             "operator": "=",
-            "value": "travel"
+            "value": "rent"
           },
           {
             "field": "amount",

@@ -11,13 +11,15 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from database.connection import session_scope
 from evaluation.analysis.failure_analyzer import analyze_failures
 from evaluation.loaders.dataset_loader import load_evaluation_dataset
 from evaluation.reports.evaluation_report import build_evaluation_report
 from evaluation.runners.evaluation_runner import EvaluationRunner
 
-from api.dependencies.analytics import build_analytics_service, get_nl_completion
+from api.dependencies.analytics import (
+    build_analytics_application,
+    get_nl_completion,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -50,17 +52,15 @@ def main() -> None:
     try:
         completion = get_nl_completion()
 
-        with session_scope() as db_session:
-            service = build_analytics_service(
-                db_session=db_session,
-                completion=completion,
-            )
+        application = build_analytics_application(
+            completion=completion,
+        )
 
-            runner = EvaluationRunner(service=service)
+        runner = EvaluationRunner(application=application)
 
-            print("\nRunning evaluation cases...\n")
+        print("\nRunning evaluation cases...\n")
 
-            results = runner.run_cases(cases)
+        results = runner.run_cases(cases)
 
     except Exception:
         import traceback
