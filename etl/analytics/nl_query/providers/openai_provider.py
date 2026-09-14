@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from openai import OpenAI
 
 from etl.analytics.nl_query.parser import CompletionFn, CompletionRequest
-from etl.config.settings import get_settings
+from etl.analytics.config.settings import get_settings
 
 
 @dataclass(frozen=True)

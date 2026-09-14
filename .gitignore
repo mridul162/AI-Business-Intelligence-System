@@ -6,6 +6,7 @@ __pycache__/
 evaluation_report.txt
 projectflow_2.md
 table_columns.txt
+progress.txt
 
 # C extensions
 *.so

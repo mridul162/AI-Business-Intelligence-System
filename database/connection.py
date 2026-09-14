@@ -1,25 +1,13 @@
 """
 Database connection and session management for the AI-BI platform.
 
-Configuration is read from environment variables so the same code works
-across local development, CI, and production without code changes.
-
-Required env vars (see .env.example):
-    AIBI_DB_HOST
-    AIBI_DB_PORT
-    AIBI_DB_NAME
-    AIBI_DB_USER
-    AIBI_DB_PASSWORD
-
-Optional:
-    AIBI_DB_ECHO           ("true"/"false", default "false")
-    AIBI_DB_POOL_SIZE       (default 5)
-    AIBI_DB_MAX_OVERFLOW    (default 10)
+Database configuration is provided by the centralized analytics Settings
+object so the same configuration source is used across the application,
+CLI tools, tests, and migrations.
 """
 
 from __future__ import annotations
 
-import os
 from contextlib import contextmanager
 from functools import lru_cache
 from typing import Iterator
@@ -28,65 +16,71 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import URL, Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-
-def _env_bool(name: str, default: bool = False) -> bool:
-    val = os.getenv(name)
-    if val is None:
-        return default
-    return val.strip().lower() in {"1", "true", "yes", "on"}
+from etl.analytics.config import Settings, get_settings
 
 
-def build_database_url() -> URL:
-    """Build a SQLAlchemy URL from environment variables.
-
-    Using URL.create() (rather than an f-string) avoids issues with
-    special characters in passwords and keeps the driver name centralized.
+def build_database_url(settings: Settings | None = None) -> URL:
     """
+    Build the PostgreSQL database URL from application settings.
+
+    Args:
+        settings: Optional Settings instance. When omitted, the cached
+            application settings are used.
+
+    Returns:
+        SQLAlchemy database URL.
+    """
+    settings = settings or get_settings()
+
     return URL.create(
         drivername="postgresql+psycopg2",
-        username=os.environ["AIBI_DB_USER"],
-        password=os.environ.get("AIBI_DB_PASSWORD", ""),
-        host=os.environ.get("AIBI_DB_HOST", "localhost"),
-        port=int(os.environ.get("AIBI_DB_PORT", "5432")),
-        database=os.environ["AIBI_DB_NAME"],
+        username=settings.db_user,
+        password=settings.db_password,
+        host=settings.db_host,
+        port=settings.db_port,
+        database=settings.db_name,
     )
 
 
 @lru_cache(maxsize=1)
 def get_engine() -> Engine:
-    """Return a process-wide singleton engine.
-
-    Cached with lru_cache so repeated calls (e.g. from multiple modules)
-    reuse the same connection pool instead of opening a new one each time.
     """
+    Return the cached SQLAlchemy engine.
+
+    Database configuration comes exclusively from Settings.
+    """
+    settings = get_settings()
+
     return create_engine(
-        build_database_url(),
-        echo=_env_bool("AIBI_DB_ECHO", False),
-        pool_size=int(os.environ.get("AIBI_DB_POOL_SIZE", "5")),
-        max_overflow=int(os.environ.get("AIBI_DB_MAX_OVERFLOW", "10")),
-        pool_pre_ping=True,  # avoids stale-connection errors after idle periods
+        build_database_url(settings),
+        echo=settings.db_echo,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+        pool_pre_ping=True,
         future=True,
     )
 
 
 @lru_cache(maxsize=1)
 def get_sessionmaker() -> sessionmaker[Session]:
-    return sessionmaker(bind=get_engine(), autoflush=False, expire_on_commit=False)
+    """Return the cached SQLAlchemy session factory."""
+    return sessionmaker(
+        bind=get_engine(),
+        autoflush=False,
+        expire_on_commit=False,
+    )
 
 
 @contextmanager
 def session_scope() -> Iterator[Session]:
-    """Provide a transactional scope around a series of operations.
+    """
+    Provide a transactional SQLAlchemy session.
 
-    Usage:
-        with session_scope() as session:
-            session.execute(...)
-
-    Commits on clean exit, rolls back and re-raises on any exception.
-    This is the pattern ingestion/loading jobs should use rather than
-    managing commit/rollback manually at every call site.
+    Commits on successful completion, rolls back on exceptions,
+    and always closes the session.
     """
     session = get_sessionmaker()()
+
     try:
         yield session
         session.commit()
