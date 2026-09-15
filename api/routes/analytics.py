@@ -63,7 +63,7 @@ def query_analytics(
             code="INVALID_QUESTION",
             message=str(exc),
             stage="parsing",
-            http_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            http_status=status.HTTP_422_UNPROCESSABLE_CONTENT,
             cause=exc,
         )
     except (
@@ -74,7 +74,7 @@ def query_analytics(
             code="INVALID_LLM_RESPONSE",
             message=str(exc),
             stage="parsing",
-            http_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            http_status=status.HTTP_422_UNPROCESSABLE_CONTENT,
             cause=exc,
         )
     except LLMCallError as exc:
@@ -90,7 +90,7 @@ def query_analytics(
             code="SEMANTIC_RESOLUTION_FAILED",
             message=str(exc),
             stage="semantic_resolution",
-            http_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            http_status=status.HTTP_422_UNPROCESSABLE_CONTENT,
             cause=exc,
         )
     except SQLBuilderError as exc:
