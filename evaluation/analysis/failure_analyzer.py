@@ -39,6 +39,13 @@ from evaluation.schemas.evaluation_result import EvaluationResult, FieldDiff
 class FailureType(str, Enum):
     """Categories of analytical evaluation failures."""
 
+    PARSER_FAILURE = "parser_failure"
+    SEMANTIC_RESOLUTION_FAILURE = "semantic_resolution_failure"
+    TIME_RESOLUTION_FAILURE = "time_resolution_failure"
+    PLANNING_FAILURE = "planning_failure"
+    SQL_CONSTRUCTION_FAILURE = "sql_construction_failure"
+    EXECUTION_FAILURE = "execution_failure"
+    RESULT_MERGE_FAILURE = "result_merge_failure"
     METRIC_MISMATCH = "metric_mismatch"
     DIMENSION_MISMATCH = "dimension_mismatch"
     FILTER_MISMATCH = "filter_mismatch"
@@ -56,6 +63,16 @@ _FIELD_TO_FAILURE_TYPE: dict[str, FailureType] = {
     "dimensions": FailureType.DIMENSION_MISMATCH,
     "filters": FailureType.FILTER_MISMATCH,
     "time_grain": FailureType.TIME_GRAIN_MISMATCH,
+}
+
+_STAGE_TO_FAILURE_TYPE: dict[str, FailureType] = {
+    "parser": FailureType.PARSER_FAILURE,
+    "semantic_resolution": FailureType.SEMANTIC_RESOLUTION_FAILURE,
+    "time_resolution": FailureType.TIME_RESOLUTION_FAILURE,
+    "planning": FailureType.PLANNING_FAILURE,
+    "sql_compilation": FailureType.SQL_CONSTRUCTION_FAILURE,
+    "execution": FailureType.EXECUTION_FAILURE,
+    "result_merge": FailureType.RESULT_MERGE_FAILURE,
 }
 
 
@@ -94,6 +111,11 @@ def _classify_failure(result: EvaluationResult) -> FailureDetail:
             failure_types.append(FailureType.UNEXPECTED_ERROR)
         else:
             failure_types.append(FailureType.PIPELINE_FAILURE)
+            stage_failure = _STAGE_TO_FAILURE_TYPE.get(
+                result.actual_failed_stage or ""
+            )
+            if stage_failure is not None:
+                failure_types.append(stage_failure)
     else:
         for diff in result.field_diffs:
             failure_types.append(

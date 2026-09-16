@@ -138,14 +138,131 @@ raw JSON. To add cases, add an `add(...)` call there and re-run:
 python3 build_dataset.py
 ```
 
-## Next steps (not in this phase)
+## Current evaluation status
 
-Per Phase 10.1 scope, this delivers only the dataset + schema. Next:
+Phase 10.1 through Phase 10.4 are implemented:
 
-- **Phase 10.2** — component-level runner (parser-only, resolver-only,
-  time-resolution-only scoring).
-- **Phase 10.3** — end-to-end runner against the live pipeline.
-- **Phase 10.4** — failure taxonomy aggregation from run output.
+- **Phase 10.1** — versioned dataset and deterministic expected-output schema.
+- **Phase 10.2** — evaluation runner with typed pipeline-stage detection.
+- **Phase 10.3** — end-to-end evaluation through `AnalyticsApplication`.
+- **Phase 10.4** — failure taxonomy aggregation and field-level diagnostics.
+- **Phase 10.5** — Evaluation Baseline & Correctness Hardening
 
-Do not wire this dataset into the production pipeline yet — establish the
-runner and a baseline first.
+The current taxonomy distinguishes parser, semantic resolution, time
+resolution, planning, SQL construction, execution, result merging, and
+expected-vs-actual output mismatches. The generic `pipeline_failure` category
+is retained for compatibility with older reports.
+
+The next step is correctness hardening: freeze a baseline, select one failure
+class, fix the responsible layer, add a regression case, and rerun targeted
+tests, the full suite, and the evaluation dataset. Do not modify expected
+answers merely to improve the score.
+
+### 10.5.1 — Run and freeze the current baseline
+
+Run the complete evaluation dataset through:
+
+NL Question
+    ↓
+AnalyticsApplication
+    ↓
+Evaluation Runner
+    ↓
+Failure Analyzer
+    ↓
+Evaluation Report
+
+Record:
+
+Dataset version
+Total cases
+Passed
+Failed
+Accuracy
+Failure by stage
+Failure by category
+Failure by difficulty
+
+The important thing is not to optimize the accuracy number blindly.
+
+You want to know:
+
+Which layer is responsible for each failure?
+
+### 10.5.2 — Inspect failures by stage
+
+Your new taxonomy makes this straightforward:
+
+Parser
+Semantic Resolution
+Time Resolution
+Planning
+SQL Construction
+Execution
+Result Merging
+Output Mismatch
+
+For every remaining failure:
+
+Evaluation Case
+      ↓
+Failure Stage
+      ↓
+Failure Reason
+      ↓
+Responsible Component
+      ↓
+Fix
+      ↓
+Regression Test
+
+This is the point where your evaluation system starts functioning as an actual development feedback loop, rather than just a benchmark.
+
+### 10.5.3 — Add regression cases
+
+Every legitimate correctness bug discovered should produce a permanent test.
+
+For example:
+
+EVAL-035
+   ↓
+Parser produced invalid dimension
+   ↓
+Fix parser behavior
+   ↓
+Add parser regression test
+   ↓
+Re-run evaluation
+
+But if an evaluation case exposes an intentionally unsupported behavior, don't automatically modify the system to satisfy it. First decide whether:
+
+the implementation is wrong,
+the expected output is wrong,
+the capability is unsupported,
+or the question itself is ambiguous/invalid.
+
+That distinction is important for avoiding evaluation overfitting.
+
+### 10.5.4 — Establish a quality gate
+
+Once the remaining failures have been investigated, introduce a reproducible evaluation command such as:
+
+pytest
+python -m etl.analytics.evaluation.run_evaluation
+
+and eventually make the evaluation report provide a clear result like:
+
+Evaluation Baseline
+────────────────────────────
+Dataset: analytics_eval_vX
+Cases:   N
+Passed:  N
+Failed:  N
+Accuracy: XX.XX%
+
+Pipeline failures: N
+Output mismatches: N
+
+Status: PASS / REVIEW
+
+The exact threshold should come from your project's requirements rather than choosing an arbitrary percentage.

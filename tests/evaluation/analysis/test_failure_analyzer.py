@@ -206,7 +206,47 @@ def test_analyze_detects_pipeline_failure() -> None:
     failure = analysis.failures[0]
 
     assert FailureType.PIPELINE_FAILURE in failure.failure_types
+    assert (
+        FailureType.SEMANTIC_RESOLUTION_FAILURE
+        in failure.failure_types
+    )
     assert failure.error == "Semantic resolution failed."
+
+
+def test_analyze_classifies_each_known_pipeline_stage() -> None:
+    expected_failure_types = {
+        "parser": FailureType.PARSER_FAILURE,
+        "semantic_resolution": FailureType.SEMANTIC_RESOLUTION_FAILURE,
+        "time_resolution": FailureType.TIME_RESOLUTION_FAILURE,
+        "planning": FailureType.PLANNING_FAILURE,
+        "sql_compilation": FailureType.SQL_CONSTRUCTION_FAILURE,
+        "execution": FailureType.EXECUTION_FAILURE,
+        "result_merge": FailureType.RESULT_MERGE_FAILURE,
+    }
+
+    results = [
+        _make_result(
+            case_id=f"EVAL-{index:03d}",
+            passed=False,
+            actual_status="failure",
+            actual_failed_stage=stage,
+        )
+        for index, stage in enumerate(expected_failure_types, start=1)
+    ]
+
+    analysis = analyze_failures(results)  # type: ignore
+
+    assert analysis.failed_results == len(expected_failure_types)
+
+    for failure, expected_failure_type in zip(
+        analysis.failures,
+        expected_failure_types.values(),
+    ):
+        assert FailureType.PIPELINE_FAILURE in failure.failure_types
+        assert expected_failure_type in failure.failure_types
+        assert (
+            analysis.failure_counts[expected_failure_type.value] == 1
+        )
 
 
 def test_analyze_detects_unexpected_error() -> None:

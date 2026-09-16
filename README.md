@@ -34,7 +34,7 @@ Business Data Sources
 │    Staging Layer     │
 │ Cleaned source data  │
 │ Validation status    │
-│ Source metadata     │
+│ Source metadata      │
 └──────────────────────┘
         │
         ▼
@@ -66,13 +66,12 @@ Business Data Sources
 ┌──────────────────────┐
 │ Natural Language     │
 │ Query Layer          │
-│ Phase 9              │
 └──────────────────────┘
         │
         ▼
 ┌──────────────────────┐
 │ Semantic Resolution  │
-│ Next: Phase 9.3      │
+│ Canonical concepts   │
 └──────────────────────┘
 ````
 
@@ -650,9 +649,9 @@ This allows the analytical layer to be tested directly against the database befo
 
 # Phase 9 — Natural Language → Analytical Query Layer
 
-The system is currently implementing the natural language interface for analytical queries.
+The natural-language analytics pipeline is implemented through structured intent extraction, semantic resolution, time resolution, deterministic query planning, SQL construction, execution, result merging, and API response formatting.
 
-The goal is to convert questions such as:
+The system converts questions such as:
 
 ```text
 What were my total sales this month?
@@ -884,6 +883,64 @@ The parser includes structured errors for:
 
 ---
 
+## Phase 9.3 — Semantic Resolution
+
+Completed.
+
+The semantic resolver converts parser output into canonical, registry-backed analytical concepts. It resolves metric aliases, dimension aliases, metric-to-dimension compatibility, filter fields, and optional entity names through an injected entity lookup interface.
+
+The resolver returns a `ResolvedAnalyticalQuery` and does not generate SQL or execute database queries.
+
+## Phase 9.4 — Time Range Resolution
+
+Completed.
+
+Relative presets such as `today`, `last_month`, and `current_month` are converted into explicit date ranges before query planning. The reference date can be injected for deterministic testing.
+
+## Phase 9.5 — Query Planning, SQL, and Execution
+
+Completed.
+
+The analytics path now supports:
+
+1. Query planning from canonical analytical requests
+2. Single-query plans for compatible metrics
+3. Multi-query plans for different views or conflicting fixed filters
+4. Parameterized SQL construction through SQLAlchemy
+5. PostgreSQL query execution
+6. Result merging for split, comparison, and side-by-side plans
+7. A stable structured analytical response
+
+The LLM does not generate arbitrary SQL. Registry definitions and allowlisted identifiers control the SQL boundary.
+
+## Phase 9.6 — Application and API Integration
+
+Completed for the current prototype service.
+
+`AnalyticsApplication` coordinates the complete workflow:
+
+```text
+Natural Language Question
+        ↓
+NL Query Parser
+        ↓
+Semantic Resolver
+        ↓
+Time Resolver
+        ↓
+Query Planner
+        ↓
+SQL Builder
+        ↓
+Query Executor
+        ↓
+Result Merger
+        ↓
+Analytical Response
+```
+
+The FastAPI service exposes the workflow through `POST /analytics/query` and maps expected parser, semantic, SQL, database, and execution errors to structured API responses.
+
 ## Parser and Semantic Resolution Boundary
 
 An important architectural decision is that parsing and semantic validation remain separate.
@@ -910,14 +967,12 @@ The architecture is:
 Natural Language Question
         │
         ▼
-Phase 9.2
 NL Query Parser
         │
         ▼
 Structured AnalyticalQueryRequest
         │
         ▼
-Phase 9.3
 Semantic Resolver
         │
         ▼
@@ -933,13 +988,9 @@ This separation prevents the LLM parsing layer from becoming tightly coupled to 
 
 # Testing
 
-The project currently has a comprehensive automated test suite.
+The project has automated unit, contract, API, integration, and evaluation tests.
 
-Latest successful result:
-
-```text
-146 passed, 168 subtests passed in 0.35s
-```
+Test counts and evaluation accuracy are regenerated as part of each development baseline. PostgreSQL integration tests require a reachable test database and may be skipped when one is unavailable.
 
 Tests currently cover areas including:
 
@@ -959,6 +1010,12 @@ Tests currently cover areas including:
 * Parser behavior
 * LLM abstraction
 * Parser/registry separation
+* Semantic metric, dimension, and filter resolution
+* Relative time resolution
+* Query planning and multi-query merge strategies
+* SQL construction and identifier validation
+* Query execution and API error mapping
+* Real PostgreSQL end-to-end analytics flows
 
 ---
 
@@ -985,34 +1042,32 @@ Tests currently cover areas including:
 └───────────────┬───────────────┘
                 ▼
 ┌───────────────────────────────┐
-│ Warehouse Validation          │
+│     Warehouse Validation      │
 │ + Financial Reconciliation    │
 └───────────────┬───────────────┘
                 ▼
 ┌───────────────────────────────┐
-│     Analytics Views           │
-│    Semantic Data Layer        │
+│        Analytics Views        │
+│      Semantic Data Layer      │
 └───────────────┬───────────────┘
                 ▼
 ┌───────────────────────────────┐
-│    Metric Registry            │
+│       Metric Registry         │
 │ Machine-Readable BI Metrics   │
 └───────────────┬───────────────┘
                 ▼
 ┌───────────────────────────────┐
-│   Analytical Query Layer      │
-│ Structured Request → SQL      │
+│    Analytical Query Layer     │
+│    Structured Request → SQ    │
 └───────────────┬───────────────┘
                 ▼
 ┌───────────────────────────────┐
-│ Phase 9.1 + 9.2               │
-│ NL → Structured Query         │
-│ Parser                        │
+│     NL → Structured Query     │
+│             Parser            │
 └───────────────┬───────────────┘
                 ▼
 ┌───────────────────────────────┐
-│ Phase 9.3 — NEXT              │
-│ Semantic Resolution           │
+│     Semantic Resolution       │
 └───────────────────────────────┘
 ```
 
@@ -1030,54 +1085,31 @@ PHASE 9   — Natural Language → Analytical Query Layer
 
 9.1 Analytical Query Contract / Schema              ✅
 9.2 NL → Structured Query Parser                    ✅
-9.3 Semantic Resolution Layer                       ⏭️ NEXT
-9.4 Time Range Resolution                           ⏳
-9.5 Analytical Query Validation                     ⏳
-9.6 NL → Query Layer Integration                    ⏳
+9.3 Semantic Resolution Layer                       ✅
+9.4 Time Range Resolution                           ✅
+9.5 Query Planning and SQL Execution                ✅
+9.6 Result Merging and API Integration              ✅
+
+Current state: feature-complete analytical prototype; production hardening remains.
 ```
 
 ---
 
-# Next Step
+# Current Limitations and Production Work
 
-## Phase 9.3 — Semantic Resolution Layer
+The current implementation is a functional analytical prototype, not yet a production-hardened multi-tenant service.
 
-The next component will resolve LLM-generated business terms into canonical metric and dimension definitions.
+Priority hardening areas are:
 
-Example:
+* Resolve remaining evaluation failures in dimensions, filters, ambiguity handling, and transaction recovery
+* Reconcile overlapping legacy and current query contracts
+* Add database and LLM timeouts, retry budgets, statement limits, and cost controls
+* Add authentication, authorization, tenant isolation, rate limiting, request IDs, audit logging, and readiness checks
+* Expand ingestion quality checks to freshness, schema drift, referential integrity, and replayable batch state
+* Add structured logs, traces, metrics, load tests, deployment automation, backup/restore, and operational runbooks
+* Wire tenant-scoped entity resolution into the application composition root
 
-```text
-User Question
-        │
-        ▼
-"Show me sales by product this month"
-        │
-        ▼
-NL Query Parser
-        │
-        ▼
-metric = "sales"
-dimensions = ["product"]
-        │
-        ▼
-Semantic Resolver
-        │
-        ├── sales
-        │       ↓
-        │   gross_sales
-        │
-        └── product
-                ↓
-            product_name
-        │
-        ▼
-Canonical Analytical Request
-        │
-        ▼
-Metric Validation + Query Layer
-```
-
-Phase 9.3 will ensure that downstream query generation operates only on canonical, registry-backed business definitions.
+Narrative insight generation, conversation memory, and dashboard features should build on these controls rather than bypass the structured analytical pipeline.
 
 ---
 
@@ -1155,19 +1187,18 @@ Completed
 ✓ Phase 9.1 analytical query contract
 ✓ Phase 9.2 NL query parser
 
-In Progress
-───────────
-→ Phase 9.3 semantic resolution
+✓ Phase 9.3 semantic resolution
+✓ Phase 9.4 time range resolution
+✓ Phase 9.5 query planning and SQL execution
+✓ Phase 9.6 result merging and API integration
 
 Upcoming
 ────────
-○ Phase 9.4 time range resolution
-○ Phase 9.5 analytical query validation
-○ Phase 9.6 NL → query layer integration
-○ LLM-backed end-to-end analytical querying
-○ Analytical result generation
-○ API integration
-○ Business intelligence interface
-```
-
+○ Evaluation and correctness hardening
+○ Production security and tenant isolation
+○ Data freshness and quality controls
+○ Observability, performance, and load testing
+○ Grounded analytical insight generation
+○ Conversation memory and dashboard experience
+○ Deployment automation and operational readiness
 ```

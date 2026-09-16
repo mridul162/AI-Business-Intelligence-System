@@ -2,15 +2,18 @@ from __future__ import annotations
 
 from unittest.mock import Mock, patch
 
+import pytest
+
 from etl.analytics.application.analytics_application import AnalyticsApplication
 from etl.analytics.application.factory import (
     create_analytics_application,
     get_analytics_application,
 )
 from etl.analytics.config import Settings
-from etl.analytics.nl_query.parser import NLQueryParser
+from etl.analytics.nl_query.parser import CompletionFn, CompletionRequest, NLQueryParser
 from etl.analytics.response.builder import AnalyticalResponseBuilder
 from etl.analytics.semantic import SemanticResolver
+from etl.analytics.application.factory import get_nl_completion
 
 
 def make_settings() -> Settings:
@@ -210,3 +213,43 @@ def test_get_nl_completion_is_used_when_completion_not_supplied() -> None:
 
     mock_get_completion.assert_called_once()
     assert application.parser._complete is completion
+
+
+def test_get_nl_completion_passes_settings_to_openai_factory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = Settings(
+        _env_file=None, # type: ignore
+        nl_query_model="gpt-test",
+        openai_api_key="test-key",
+        db_name="test-db",
+        db_user="test-user",
+    )
+
+    captured: dict[str, str] = {}
+
+    def fake_create_openai_completion(
+        *,
+        model: str,
+        api_key: str,
+    ) -> CompletionFn:
+        captured["model"] = model
+        captured["api_key"] = api_key
+
+        def completion(request: CompletionRequest) -> str:
+            return "{}"
+
+        return completion
+
+    monkeypatch.setattr(
+        "etl.analytics.application.factory.create_openai_completion",
+        fake_create_openai_completion,
+    )
+
+    completion = get_nl_completion(settings)
+
+    assert callable(completion)
+    assert captured == {
+        "model": "gpt-test",
+        "api_key": "test-key",
+    }

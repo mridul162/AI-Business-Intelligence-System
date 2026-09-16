@@ -80,9 +80,11 @@ class FailureStage(str, Enum):
     PARSER = "parser"
     SEMANTIC_RESOLUTION = "semantic_resolution"
     TIME_RESOLUTION = "time_resolution"
+    PLANNING = "planning"
     VALIDATION = "validation"
     SQL_COMPILATION = "sql_compilation"
     EXECUTION = "execution"
+    RESULT_MERGE = "result_merge"
     NONE = "none"
 
 
