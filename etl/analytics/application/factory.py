@@ -22,9 +22,11 @@ from etl.analytics.semantic import SemanticResolver
 from etl.analytics.sql.sql_builder import build_query
 
 
-def get_nl_completion() -> CompletionFn:
-    """Return the configured natural-language completion provider."""
-    return create_openai_completion()
+def get_nl_completion(settings: Settings) -> CompletionFn:
+    return create_openai_completion(
+        model=settings.nl_query_model,
+        api_key=settings.openai_api_key,
+    )
 
 
 def create_analytics_application(
@@ -38,7 +40,7 @@ def create_analytics_application(
 
     This function is the composition root for the analytics pipeline.
     """
-    completion = completion or get_nl_completion()
+    completion = completion or get_nl_completion(settings)
 
     planner = partial(
         plan_query,

@@ -1,12 +1,3 @@
-"""
-OpenAI completion provider for natural-language analytical queries.
-
-This module adapts the OpenAI Responses API to the CompletionFn contract
-used by NLQueryParser:
-
-    CompletionRequest -> str
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,7 +5,6 @@ from dataclasses import dataclass
 from openai import OpenAI
 
 from etl.analytics.nl_query.parser import CompletionFn, CompletionRequest
-from etl.analytics.config.settings import get_settings
 
 
 @dataclass(frozen=True)
@@ -22,6 +12,7 @@ class OpenAICompletionConfig:
     """Configuration for the OpenAI completion provider."""
 
     model: str
+    api_key: str
 
 
 class OpenAICompletionProvider:
@@ -30,41 +21,28 @@ class OpenAICompletionProvider:
     def __init__(
         self,
         *,
+        config: OpenAICompletionConfig,
         client: OpenAI | None = None,
-        config: OpenAICompletionConfig | None = None,
     ) -> None:
-        settings = get_settings()
-
-        self.config = config or OpenAICompletionConfig(
-            model=settings.nl_query_model,
-        )
-
-        if not self.config.model.strip():
+        if not config.model.strip():
             raise ValueError(
                 "OpenAI completion model must not be empty."
             )
 
-        if client is not None:
-            self.client = client
-            return
-
-        if not settings.openai_api_key:
+        if client is None and not config.api_key:
             raise RuntimeError(
-                "OpenAI API key is not configured. "
-                "Set OPENAI_API_KEY in the environment or .env file."
+                "OpenAI API key is not configured."
             )
 
-        self.client = OpenAI(
-            api_key=settings.openai_api_key,
+        self.config = config
+        self.client = (
+            client
+            if client is not None
+            else OpenAI(api_key=config.api_key)
         )
 
     def __call__(self, request: CompletionRequest) -> str:
-        """
-        Generate a completion using the OpenAI Responses API.
-
-        The provider intentionally returns raw model text. JSON parsing
-        and validation belong to NLQueryParser.
-        """
+        """Generate a completion using the OpenAI Responses API."""
 
         response = self.client.responses.create(
             model=self.config.model,
@@ -97,27 +75,14 @@ class OpenAICompletionProvider:
 
 def create_openai_completion(
     *,
-    model: str | None = None,
+    model: str,
+    api_key: str,
 ) -> CompletionFn:
-    """Create a CompletionFn backed by OpenAI."""
+    """Create an OpenAI-backed CompletionFn."""
 
-    settings = get_settings()
-
-    selected_model = (
-        model.strip()
-        if model is not None
-        else settings.nl_query_model
-    )
-
-    if not selected_model:
-        raise ValueError(
-            "OpenAI completion model must not be empty."
-        )
-
-    provider = OpenAICompletionProvider(
+    return OpenAICompletionProvider(
         config=OpenAICompletionConfig(
-            model=selected_model,
+            model=model,
+            api_key=api_key,
         )
     )
-
-    return provider
