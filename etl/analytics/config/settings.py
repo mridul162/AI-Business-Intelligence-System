@@ -33,6 +33,34 @@ class Settings(BaseSettings):
     nl_query_model: str = "gpt-4.1-mini"
 
     # ------------------------------------------------------------------
+    # LLM Reliability
+    # ------------------------------------------------------------------
+
+    llm_timeout: float = Field(
+        default=20.0,
+        gt=0,
+        validation_alias="AIBI_LLM_TIMEOUT",
+    )
+
+    llm_max_attempts: int = Field(
+        default=3,
+        ge=1,
+        validation_alias="AIBI_LLM_MAX_ATTEMPTS",
+    )
+
+    llm_retry_initial_backoff: float = Field(
+        default=0.5,
+        ge=0,
+        validation_alias="AIBI_LLM_RETRY_INITIAL_BACKOFF",
+    )
+
+    llm_retry_max_backoff: float = Field(
+        default=2.0,
+        ge=0,
+        validation_alias="AIBI_LLM_RETRY_MAX_BACKOFF",
+    )
+
+    # ------------------------------------------------------------------
     # Application
     # ------------------------------------------------------------------
 

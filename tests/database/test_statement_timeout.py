@@ -15,7 +15,7 @@ TEST_DB_URL = os.environ.get(
 
 
 @pytest.fixture(scope="module")
-def timeout_engine() -> Engine:
+def timeout_engine() -> Engine: # type: ignore
     engine = create_engine(
         TEST_DB_URL,
         future=True,
@@ -31,7 +31,7 @@ def timeout_engine() -> Engine:
         engine.dispose()
         pytest.skip(f"Integration test Postgres not reachable: {exc}")
 
-    yield engine
+    yield engine # type: ignore
     engine.dispose()
 
 

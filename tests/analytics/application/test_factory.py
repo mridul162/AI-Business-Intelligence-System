@@ -8,12 +8,16 @@ from etl.analytics.application.analytics_application import AnalyticsApplication
 from etl.analytics.application.factory import (
     create_analytics_application,
     get_analytics_application,
+    get_nl_completion,
 )
 from etl.analytics.config import Settings
-from etl.analytics.nl_query.parser import CompletionFn, CompletionRequest, NLQueryParser
+from etl.analytics.nl_query.parser import (
+    CompletionFn,
+    CompletionRequest,
+    NLQueryParser,
+)
 from etl.analytics.response.builder import AnalyticalResponseBuilder
 from etl.analytics.semantic import SemanticResolver
-from etl.analytics.application.factory import get_nl_completion
 
 
 def make_settings() -> Settings:
@@ -211,30 +215,42 @@ def test_get_nl_completion_is_used_when_completion_not_supplied() -> None:
             settings=settings,
         )
 
-    mock_get_completion.assert_called_once()
+    mock_get_completion.assert_called_once_with(settings)
     assert application.parser._complete is completion
 
 
-def test_get_nl_completion_passes_settings_to_openai_factory(
+def test_get_nl_completion_passes_all_settings_to_openai_factory(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     settings = Settings(
-        _env_file=None, # type: ignore
+        _env_file=None,  # type: ignore
         nl_query_model="gpt-test",
         openai_api_key="test-key",
+        llm_timeout=15.0,
+        llm_max_attempts=4,
+        llm_retry_initial_backoff=0.25,
+        llm_retry_max_backoff=3.0,
         db_name="test-db",
         db_user="test-user",
     )
 
-    captured: dict[str, str] = {}
+    captured: dict[str, object] = {}
 
     def fake_create_openai_completion(
         *,
         model: str,
         api_key: str,
+        timeout: float,
+        max_attempts: int,
+        retry_initial_backoff: float,
+        retry_max_backoff: float,
     ) -> CompletionFn:
         captured["model"] = model
         captured["api_key"] = api_key
+        captured["timeout"] = timeout
+        captured["max_attempts"] = max_attempts
+        captured["retry_initial_backoff"] = retry_initial_backoff
+        captured["retry_max_backoff"] = retry_max_backoff
 
         def completion(request: CompletionRequest) -> str:
             return "{}"
@@ -249,7 +265,12 @@ def test_get_nl_completion_passes_settings_to_openai_factory(
     completion = get_nl_completion(settings)
 
     assert callable(completion)
+
     assert captured == {
         "model": "gpt-test",
         "api_key": "test-key",
+        "timeout": 15.0,
+        "max_attempts": 4,
+        "retry_initial_backoff": 0.25,
+        "retry_max_backoff": 3.0,
     }

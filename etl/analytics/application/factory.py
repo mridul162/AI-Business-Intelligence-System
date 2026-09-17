@@ -12,7 +12,7 @@ from etl.analytics.executor.executor import QueryExecutor
 from etl.analytics.merger import ResultMerger
 from etl.analytics.metrics.registry import get_metric
 from etl.analytics.nl_query.parser import CompletionFn, NLQueryParser
-from etl.analytics.nl_query.providers.openai_provider import (
+from etl.analytics.providers import (
     create_openai_completion,
 )
 from etl.analytics.orchestration import AnalyticsQueryOrchestrator
@@ -26,8 +26,11 @@ def get_nl_completion(settings: Settings) -> CompletionFn:
     return create_openai_completion(
         model=settings.nl_query_model,
         api_key=settings.openai_api_key,
+        timeout=settings.llm_timeout,
+        max_attempts=settings.llm_max_attempts,
+        retry_initial_backoff=settings.llm_retry_initial_backoff,
+        retry_max_backoff=settings.llm_retry_max_backoff,
     )
-
 
 def create_analytics_application(
     *,
