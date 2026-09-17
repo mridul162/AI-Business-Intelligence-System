@@ -3,9 +3,8 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from database.connection import (
     build_database_url,
@@ -34,7 +33,7 @@ def clear_database_caches():
 def settings() -> Settings:
     """Provide isolated database settings without loading .env."""
     return Settings(
-        _env_file=None, # type: ignore
+        _env_file=None,  # type: ignore
         db_host="localhost",
         db_port=5432,
         db_name="test_db",
@@ -43,6 +42,9 @@ def settings() -> Settings:
         db_echo=False,
         db_pool_size=5,
         db_max_overflow=10,
+        db_connect_timeout=5,
+        db_statement_timeout=30,
+        db_pool_timeout=10,
     )
 
 
@@ -60,7 +62,7 @@ def test_build_database_url(settings: Settings):
 
 def test_build_database_url_uses_application_settings():
     settings = Settings(
-        _env_file=None, # type: ignore
+        _env_file=None,  # type: ignore
         db_host="db.example.com",
         db_port=5433,
         db_name="analytics",
@@ -79,7 +81,7 @@ def test_build_database_url_uses_application_settings():
 
 def test_build_database_url_uses_cached_settings_by_default():
     configured_settings = Settings(
-        _env_file=None, # type: ignore
+        _env_file=None,  # type: ignore
         db_host="localhost",
         db_port=5432,
         db_name="analytics",
@@ -116,8 +118,14 @@ def test_get_engine_uses_settings(settings: Settings):
     assert kwargs["echo"] is False
     assert kwargs["pool_size"] == 5
     assert kwargs["max_overflow"] == 10
+    assert kwargs["pool_timeout"] == 10
     assert kwargs["pool_pre_ping"] is True
     assert kwargs["future"] is True
+
+    connect_args = kwargs["connect_args"]
+
+    assert connect_args["connect_timeout"] == 5
+    assert connect_args["options"] == "-c statement_timeout=30000"
 
     database_url = mock_create_engine.call_args.args[0]
 
@@ -193,8 +201,6 @@ def test_get_sessionmaker_is_cached(settings: Settings):
 
 
 def test_session_scope_commits_on_success():
-    session = pytest.importorskip("sqlalchemy").orm.Session
-
     fake_session = type(
         "FakeSession",
         (),

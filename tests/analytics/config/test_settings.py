@@ -50,6 +50,11 @@ def test_database_defaults_are_applied(
     assert settings.db_echo is False
     assert settings.db_pool_size == 5
     assert settings.db_max_overflow == 10
+
+    assert settings.db_connect_timeout == 5
+    assert settings.db_statement_timeout == 30
+    assert settings.db_pool_timeout == 10
+
     assert settings.environment == "development"
 
 
@@ -74,7 +79,7 @@ def test_db_echo_parses_boolean_values(
     _set_required_db_env(monkeypatch)
     monkeypatch.setenv("AIBI_DB_ECHO", value)
 
-    settings = Settings() # type: ignore
+    settings = Settings()  # type: ignore
 
     assert settings.db_echo is expected
 
@@ -90,8 +95,11 @@ def test_environment_variables_override_defaults(
     monkeypatch.setenv("AIBI_DB_PASSWORD", "secret")
     monkeypatch.setenv("AIBI_DB_POOL_SIZE", "20")
     monkeypatch.setenv("AIBI_DB_MAX_OVERFLOW", "30")
+    monkeypatch.setenv("AIBI_DB_CONNECT_TIMEOUT", "15")
+    monkeypatch.setenv("AIBI_DB_STATEMENT_TIMEOUT", "60")
+    monkeypatch.setenv("AIBI_DB_POOL_TIMEOUT", "20")
 
-    settings = Settings() # type: ignore[call-arg]
+    settings = Settings()  # type: ignore[call-arg]
 
     assert settings.environment == "production"
     assert settings.db_host == "postgres.example.com"
@@ -100,8 +108,56 @@ def test_environment_variables_override_defaults(
     assert settings.db_pool_size == 20
     assert settings.db_max_overflow == 30
 
+    assert settings.db_connect_timeout == 15
+    assert settings.db_statement_timeout == 60
+    assert settings.db_pool_timeout == 20
 
-@pytest.mark.parametrize("missing_variable", ["AIBI_DB_NAME", "AIBI_DB_USER"])
+
+@pytest.mark.parametrize(
+    "variable",
+    [
+        "AIBI_DB_CONNECT_TIMEOUT",
+        "AIBI_DB_STATEMENT_TIMEOUT",
+        "AIBI_DB_POOL_TIMEOUT",
+    ],
+)
+@pytest.mark.parametrize("value", ["0", "-1"])
+def test_timeout_settings_must_be_positive(
+    monkeypatch: pytest.MonkeyPatch,
+    variable: str,
+    value: str,
+) -> None:
+    _set_required_db_env(monkeypatch)
+    monkeypatch.setenv(variable, value)
+
+    with pytest.raises(ValidationError):
+        Settings()  # type: ignore[call-arg]
+
+
+@pytest.mark.parametrize(
+    ("variable", "value"),
+    [
+        ("AIBI_DB_POOL_SIZE", "0"),
+        ("AIBI_DB_POOL_SIZE", "-1"),
+        ("AIBI_DB_MAX_OVERFLOW", "-1"),
+    ],
+)
+def test_pool_settings_reject_invalid_values(
+    monkeypatch: pytest.MonkeyPatch,
+    variable: str,
+    value: str,
+) -> None:
+    _set_required_db_env(monkeypatch)
+    monkeypatch.setenv(variable, value)
+
+    with pytest.raises(ValidationError):
+        Settings()  # type: ignore[call-arg]
+
+
+@pytest.mark.parametrize(
+    "missing_variable",
+    ["AIBI_DB_NAME", "AIBI_DB_USER"],
+)
 def test_missing_required_database_setting_raises_validation_error(
     monkeypatch: pytest.MonkeyPatch,
     missing_variable: str,

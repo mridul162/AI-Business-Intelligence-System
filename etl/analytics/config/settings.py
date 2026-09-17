@@ -75,12 +75,36 @@ class Settings(BaseSettings):
 
     db_pool_size: int = Field(
         default=5,
+        gt=0,
         validation_alias="AIBI_DB_POOL_SIZE",
     )
 
     db_max_overflow: int = Field(
         default=10,
+        gt=0,
         validation_alias="AIBI_DB_MAX_OVERFLOW",
+    )
+
+    # ------------------------------------------------------------------
+    # Timeout Policy
+    # ------------------------------------------------------------------
+
+    db_connect_timeout: int = Field(
+        default=5,
+        gt=0,
+        validation_alias="AIBI_DB_CONNECT_TIMEOUT",
+    )
+
+    db_statement_timeout: int = Field(
+        default=30,
+        gt=0,
+        validation_alias="AIBI_DB_STATEMENT_TIMEOUT",
+    )
+
+    db_pool_timeout: int = Field(
+        default=10,
+        gt=0,
+        validation_alias="AIBI_DB_POOL_TIMEOUT",
     )
 
 
