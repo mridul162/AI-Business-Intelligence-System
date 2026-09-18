@@ -31,7 +31,7 @@ class StubAnalyticsApplication:
 
 def make_client(application: Any) -> TestClient:
     """Create a test client with the analytics application overridden."""
-    app = create_app()
+    app = create_app(auth_enabled=False)
     app.dependency_overrides[get_analytics_application] = lambda: application
     return TestClient(app)
 

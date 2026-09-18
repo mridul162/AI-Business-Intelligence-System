@@ -13,6 +13,10 @@ from typing import Callable, Mapping, Optional
 from sqlalchemy import select
 from sqlalchemy.sql import Select
 
+from etl.analytics.context.request_context import (
+    TenantScope,
+    get_request_context,
+)
 from etl.analytics.metrics.definitions import MetricDefinition
 from etl.analytics.metrics.registry import get_metric as _default_get_metric
 from etl.analytics.planner.query_plan import QueryPlan
@@ -56,6 +60,7 @@ def build_query(
     get_metric: GetMetric = _default_get_metric,
     time_column_by_view: Optional[Mapping[str, str]] = None,
     max_result_rows: int | None = None,
+    tenant_scope: TenantScope | None = None,
 ) -> BuiltQuery:
     """
     Validate `plan` and compile it into a BuiltQuery.
@@ -92,6 +97,12 @@ def build_query(
         time_bucket_alias = TIME_BUCKET_ALIAS
 
     where_clauses = clauses.fixed_filter_clauses(metric_defs)
+    if tenant_scope is None:
+        request_context = get_request_context()
+        if request_context is not None and request_context.tenant_id is not None:
+            tenant_scope = TenantScope(request_context.tenant_id)
+    if tenant_scope is not None:
+        where_clauses.append(clauses.tenant_scope_clause(tenant_scope))
     where_clauses += _validate_and_build_user_filters(plan, metric_defs)
     if plan.time_range is not None:
         where_clauses += clauses.time_range_clauses(time_column, plan.time_range) # type: ignore

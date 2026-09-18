@@ -22,6 +22,8 @@ from etl.analytics.nl_query.exceptions import (
 )
 from etl.analytics.semantic.models import SemanticResolutionError
 from etl.analytics.planner.planner_errors import QueryPlanningLimitError
+from api.security.dependencies import require_authenticated_user
+from api.security.models import User
 from etl.analytics.sql.errors import SQLBuilderError
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -54,6 +56,7 @@ def query_analytics(
     application: AnalyticsApplication = Depends(
         get_analytics_application
     ),
+    _: User = Depends(require_authenticated_user),
 ) -> dict:
     """Execute one natural-language analytical query."""
 

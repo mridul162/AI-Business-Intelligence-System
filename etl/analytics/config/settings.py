@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -172,6 +172,41 @@ class Settings(BaseSettings):
         gt=0,
         validation_alias="AIBI_MAX_RESULT_ROWS",
     )
+
+    # ------------------------------------------------------------------
+    # Authentication
+    # ------------------------------------------------------------------
+
+    auth_enabled: bool = Field(
+        default=True,
+        validation_alias="AIBI_AUTH_ENABLED",
+    )
+
+    jwt_secret_key: str = Field(
+        default="development-only-change-me-rotate-this-key",
+        min_length=32,
+        validation_alias="AIBI_JWT_SECRET_KEY",
+    )
+
+    jwt_algorithm: str = Field(
+        default="HS256",
+        validation_alias="AIBI_JWT_ALGORITHM",
+    )
+
+    jwt_access_token_expire_minutes: int = Field(
+        default=30,
+        gt=0,
+        validation_alias="AIBI_JWT_ACCESS_TOKEN_EXPIRE_MINUTES",
+    )
+
+    @model_validator(mode="after")
+    def validate_auth_policy(self) -> "Settings":
+        if self.environment == "production" and not self.auth_enabled:
+            raise ValueError("Authentication cannot be disabled in production.")
+        if self.auth_enabled and self.environment == "production":
+            if self.jwt_secret_key.startswith("development-only"):
+                raise ValueError("Production must configure AIBI_JWT_SECRET_KEY.")
+        return self
 
 
 @lru_cache(maxsize=1)

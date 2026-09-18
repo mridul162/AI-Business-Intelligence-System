@@ -90,6 +90,7 @@ def test_environment_variables_override_defaults(
     _set_required_db_env(monkeypatch)
 
     monkeypatch.setenv("AIBI_ENVIRONMENT", "production")
+    monkeypatch.setenv("AIBI_JWT_SECRET_KEY", "production-secret-key-0123456789")
     monkeypatch.setenv("AIBI_DB_HOST", "postgres.example.com")
     monkeypatch.setenv("AIBI_DB_PORT", "5433")
     monkeypatch.setenv("AIBI_DB_PASSWORD", "secret")
@@ -211,3 +212,24 @@ def test_rate_and_cost_controls_load_from_environment(
     assert settings.rate_limit_burst == 4
     assert settings.max_queries_per_request == 3
     assert settings.max_result_rows == 250
+
+
+def test_production_cannot_disable_authentication(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _set_required_db_env(monkeypatch)
+    monkeypatch.setenv("AIBI_ENVIRONMENT", "production")
+    monkeypatch.setenv("AIBI_AUTH_ENABLED", "false")
+
+    with pytest.raises(ValidationError):
+        Settings()  # type: ignore
+
+
+def test_production_rejects_the_development_jwt_secret(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _set_required_db_env(monkeypatch)
+    monkeypatch.setenv("AIBI_ENVIRONMENT", "production")
+
+    with pytest.raises(ValidationError):
+        Settings()  # type: ignore

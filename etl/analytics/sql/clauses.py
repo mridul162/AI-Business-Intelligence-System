@@ -31,6 +31,7 @@ from sqlalchemy.sql.elements import ColumnClause
 from sqlalchemy.sql.selectable import TableClause
 
 from etl.analytics.metrics.definitions import MetricDefinition
+from etl.analytics.context.request_context import TenantScope
 from etl.analytics.planner.query_plan import PlanFilter
 
 from .errors import UnsupportedFilterOperatorError
@@ -232,3 +233,8 @@ def combine_where(clauses: Iterable[ColumnElement]) -> ColumnElement | None:
     if len(clauses) == 1:
         return clauses[0]
     return and_(*clauses)
+
+
+def tenant_scope_clause(scope: TenantScope) -> ColumnElement:
+    """Build the trusted tenant predicate; the tenant ID is bound safely."""
+    return column("tenant_id") == scope.tenant_id
