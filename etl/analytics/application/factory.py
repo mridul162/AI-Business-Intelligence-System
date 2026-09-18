@@ -48,11 +48,13 @@ def create_analytics_application(
     planner = partial(
         plan_query,
         resolve_metric=get_metric,
+        max_queries_per_request=settings.max_queries_per_request,
     )
 
     builder = partial(
         build_query,
         get_metric=get_metric,
+        max_result_rows=settings.max_result_rows,
     )
 
     orchestrator = AnalyticsQueryOrchestrator(

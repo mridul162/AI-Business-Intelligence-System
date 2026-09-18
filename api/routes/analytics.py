@@ -21,6 +21,7 @@ from etl.analytics.nl_query.exceptions import (
     LLMResponseValidationError,
 )
 from etl.analytics.semantic.models import SemanticResolutionError
+from etl.analytics.planner.planner_errors import QueryPlanningLimitError
 from etl.analytics.sql.errors import SQLBuilderError
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -91,6 +92,14 @@ def query_analytics(
             message=str(exc),
             stage="semantic_resolution",
             http_status=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            cause=exc,
+        )
+    except QueryPlanningLimitError as exc:
+        _raise_api_error(
+            code="QUERY_LIMIT_EXCEEDED",
+            message=str(exc),
+            stage="query_planning",
+            http_status=status.HTTP_400_BAD_REQUEST,
             cause=exc,
         )
     except SQLBuilderError as exc:

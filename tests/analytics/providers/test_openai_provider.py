@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
@@ -133,6 +134,47 @@ def test_openai_provider_strips_output() -> None:
     output = provider(_completion_request())
 
     assert output == '{"metric": "capital_invested"}'
+
+
+def test_openai_provider_records_optional_usage() -> None:
+    client = FakeClient('{"metric": "capital_invested"}')
+    client.responses.create = Mock(
+        return_value=SimpleNamespace(
+            output_text='{"metric": "capital_invested"}',
+            usage=SimpleNamespace(
+                input_tokens=11,
+                output_tokens=7,
+                total_tokens=18,
+            ),
+        )
+    )
+
+    provider = OpenAICompletionProvider(
+        client=client,  # type: ignore[arg-type]
+        config=OpenAICompletionConfig(model="gpt-test", api_key="test-key"),
+    )
+
+    provider(_completion_request())
+
+    assert len(provider.usage_records) == 1
+    record = provider.usage_records[0]
+    assert record.input_tokens == 11
+    assert record.output_tokens == 7
+    assert record.total_tokens == 18
+    assert record.attempt == 1
+
+
+def test_openai_provider_handles_missing_usage() -> None:
+    client = FakeClient('{"metric": "capital_invested"}')
+    provider = OpenAICompletionProvider(
+        client=client,  # type: ignore[arg-type]
+        config=OpenAICompletionConfig(model="gpt-test", api_key="test-key"),
+    )
+
+    provider(_completion_request())
+
+    assert len(provider.usage_records) == 1
+    assert provider.usage_records[0].total_tokens is None
 
 
 def test_openai_provider_rejects_empty_model() -> None:

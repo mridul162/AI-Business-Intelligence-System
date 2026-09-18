@@ -134,6 +134,44 @@ class Settings(BaseSettings):
         gt=0,
         validation_alias="AIBI_DB_POOL_TIMEOUT",
     )
+    
+    # ------------------------------------------------------------------
+    # Rate Limiting
+    # ------------------------------------------------------------------ 
+  
+    rate_limit_requests: int = Field(
+        default=30,
+        gt=0,
+        validation_alias="AIBI_RATE_LIMIT_REQUESTS",
+    )
+
+    rate_limit_window_seconds: int = Field(
+        default=60,
+        gt=0,
+        validation_alias="AIBI_RATE_LIMIT_WINDOW_SECONDS",
+    )
+
+    rate_limit_burst: int = Field(
+        default=10,
+        ge=0,
+        validation_alias="AIBI_RATE_LIMIT_BURST",
+    )
+
+    # ------------------------------------------------------------------
+    # Analytics Cost Controls
+    # ------------------------------------------------------------------     
+    
+    max_queries_per_request: int = Field(
+        default=5,
+        gt=0,
+        validation_alias="AIBI_MAX_QUERIES_PER_REQUEST",
+    )
+
+    max_result_rows: int = Field(
+        default=1000,
+        gt=0,
+        validation_alias="AIBI_MAX_RESULT_ROWS",
+    )
 
 
 @lru_cache(maxsize=1)

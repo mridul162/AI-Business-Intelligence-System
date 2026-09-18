@@ -178,3 +178,36 @@ def test_get_settings_returns_cached_instance(
     second = get_settings()
 
     assert first is second
+
+
+def test_rate_and_cost_control_defaults_are_explicit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _set_required_db_env(monkeypatch)
+
+    settings = Settings()  # type: ignore
+
+    assert settings.rate_limit_requests == 30
+    assert settings.rate_limit_window_seconds == 60
+    assert settings.rate_limit_burst == 10
+    assert settings.max_queries_per_request == 5
+    assert settings.max_result_rows == 1000
+
+
+def test_rate_and_cost_controls_load_from_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _set_required_db_env(monkeypatch)
+    monkeypatch.setenv("AIBI_RATE_LIMIT_REQUESTS", "12")
+    monkeypatch.setenv("AIBI_RATE_LIMIT_WINDOW_SECONDS", "30")
+    monkeypatch.setenv("AIBI_RATE_LIMIT_BURST", "4")
+    monkeypatch.setenv("AIBI_MAX_QUERIES_PER_REQUEST", "3")
+    monkeypatch.setenv("AIBI_MAX_RESULT_ROWS", "250")
+
+    settings = Settings()  # type: ignore
+
+    assert settings.rate_limit_requests == 12
+    assert settings.rate_limit_window_seconds == 30
+    assert settings.rate_limit_burst == 4
+    assert settings.max_queries_per_request == 3
+    assert settings.max_result_rows == 250

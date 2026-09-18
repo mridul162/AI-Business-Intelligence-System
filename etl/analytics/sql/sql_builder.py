@@ -55,6 +55,7 @@ def build_query(
     *,
     get_metric: GetMetric = _default_get_metric,
     time_column_by_view: Optional[Mapping[str, str]] = None,
+    max_result_rows: int | None = None,
 ) -> BuiltQuery:
     """
     Validate `plan` and compile it into a BuiltQuery.
@@ -110,7 +111,20 @@ def build_query(
         )
 
     if plan.limit is not None:
-        stmt = stmt.limit(_validate_limit(plan.limit))
+        _validate_limit(plan.limit)
+
+    effective_limit = plan.limit
+    if max_result_rows is not None:
+        if max_result_rows <= 0:
+            raise InvalidLimitError("max_result_rows must be positive.")
+        effective_limit = (
+            min(plan.limit, max_result_rows)
+            if plan.limit is not None
+            else max_result_rows
+        )
+
+    if effective_limit is not None:
+        stmt = stmt.limit(_validate_limit(effective_limit))
 
     return BuiltQuery(
         statement=stmt,

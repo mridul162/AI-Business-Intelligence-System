@@ -6,6 +6,7 @@ import pytest
 from etl.analytics.metrics.definitions import MetricDefinition
 from etl.analytics.planner.query_plan import MergeStrategy, MultiQueryPlan, QueryPlan
 from etl.analytics.planner.query_planner import UnknownMetricError, plan_query
+from etl.analytics.planner.planner_errors import QueryPlanningLimitError
 from etl.analytics.schemas import AnalyticalQueryRequest, FilterCondition
 
 
@@ -222,3 +223,19 @@ def test_three_way_split_groups_correctly():
         p for p in result.plans if p.source_view == "analytics.v_sales"
     )
     assert set(sales_plan.metrics) == {"total_sales", "net_sales"}
+
+
+def test_query_plan_count_is_bounded() -> None:
+    request = FakeRequest(metrics=("total_sales", "total_expenses", "cash_in", "cash_out"))
+
+    with pytest.raises(QueryPlanningLimitError):
+        plan_query(request, resolve_metric, max_queries_per_request=2)
+
+
+def test_query_plan_limit_allows_configured_count() -> None:
+    request = FakeRequest(metrics=("total_sales", "total_expenses", "cash_in", "cash_out"))
+
+    result = plan_query(request, resolve_metric, max_queries_per_request=4)
+
+    assert isinstance(result, MultiQueryPlan)
+    assert len(result.plans) == 4

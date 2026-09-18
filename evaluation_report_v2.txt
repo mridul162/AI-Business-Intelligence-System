@@ -1,0 +1,264 @@
+======================================================================
+EVALUATION REPORT
+======================================================================
+
+"EvaluationReport(
+    total_cases=78, passed_cases=65, failed_cases=13, accuracy=83.33, by_category={
+        
+        'ambiguous_invalid': EvaluationBreakdown(total=10, passed=4, failed=6, accuracy=40.0), 
+        
+        'dimension': EvaluationBreakdown(total=8, passed=6, failed=2, accuracy=75.0), 
+        
+        'direct_metric': EvaluationBreakdown(total=12, passed=12, failed=0, accuracy=100.0), 
+        
+        'filter': EvaluationBreakdown(total=8, passed=6, failed=2, accuracy=75.0), 
+        
+        'metric_paraphrase': EvaluationBreakdown(total=14, passed=14, failed=0, accuracy=100.0), 
+        
+        'multi_metric': EvaluationBreakdown(total=10, passed=10, failed=0, accuracy=100.0), 
+        
+        'time_based': EvaluationBreakdown(total=16, passed=13, failed=3, accuracy=81.25)}, 
+        
+        by_difficulty={
+            
+            'easy': EvaluationBreakdown(total=22, passed=21, failed=1, accuracy=95.45), 
+            
+            'hard': EvaluationBreakdown(total=16, passed=10, failed=6, accuracy=62.5), 
+            
+            'medium': EvaluationBreakdown(total=40, passed=34, failed=6, accuracy=85.0)}, 
+            
+            pipeline_failures=0, 
+            unexpected_errors=0, 
+            
+            failed_case_ids=('EVAL-028', 'EVAL-035','EVAL-036', 'EVAL-044', 'EVAL-045', 'EVAL-052', 'EVAL-056', 'EVAL-069', 'EVAL-070', 'EVAL-073', 'EVAL-074', 'EVAL-075', 'EVAL-077'))"
+
+======================================================================
+FAILURE ANALYSIS
+======================================================================
+{
+  "total_results": 78,
+  "failed_results": 13,
+  "failure_counts": {
+    "metric_mismatch": 1,
+    "pipeline_failure": 3,
+    "semantic_resolution_failure": 3,
+    "dimension_mismatch": 3,
+    "unknown_mismatch": 6
+  },
+  "failures": [
+    {
+      "case_id": "EVAL-028",
+      "question": "What were our sales yesterday?",
+      "category": "time_based",
+      "difficulty": "easy",
+      "failure_types": [
+        "metric_mismatch"
+      ],
+      "field_diffs": [
+        {
+          "field": "metrics",
+          "expected": [
+            "gross_sales"
+          ],
+          "actual": [
+            "net_sales"
+          ]
+        }
+      ],
+      "actual_failed_stage": null,
+      "expected_failed_stage": null,
+      "error": null
+    },
+    {
+      "case_id": "EVAL-035",
+      "question": "Show total sales by year.",
+      "category": "time_based",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure",
+        "semantic_resolution_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "semantic_resolution",
+      "expected_failed_stage": null,
+      "error": "Semantic resolution failed (1 issue(s)): dimensions[0]: 'amount' is a known dimension ('amount') but isn't supported here. Supported dimensions: ['customer_id', 'customer_name', 'location_id', 'location_name', 'product_category', 'product_id', 'product_name']"
+    },
+    {
+      "case_id": "EVAL-036",
+      "question": "Show total expenses by day this month.",
+      "category": "time_based",
+      "difficulty": "medium",
+      "failure_types": [
+        "dimension_mismatch"
+      ],
+      "field_diffs": [
+        {
+          "field": "dimensions",
+          "expected": [],
+          "actual": [
+            "amount"
+          ]
+        }
+      ],
+      "actual_failed_stage": null,
+      "expected_failed_stage": null,
+      "error": null
+    },
+    {
+      "case_id": "EVAL-044",
+      "question": "Break down cash in by cash account type.",
+      "category": "dimension",
+      "difficulty": "medium",
+      "failure_types": [
+        "dimension_mismatch"
+      ],
+      "field_diffs": [
+        {
+          "field": "dimensions",
+          "expected": [
+            "cash_account_type"
+          ],
+          "actual": [
+            "cash_account_name"
+          ]
+        }
+      ],
+      "actual_failed_stage": null,
+      "expected_failed_stage": null,
+      "error": null
+    },
+    {
+      "case_id": "EVAL-045",
+      "question": "Show cash out by cash account type.",
+      "category": "dimension",
+      "difficulty": "medium",
+      "failure_types": [
+        "dimension_mismatch"
+      ],
+      "field_diffs": [
+        {
+          "field": "dimensions",
+          "expected": [
+            "cash_account_type"
+          ],
+          "actual": [
+            "cash_account_name"
+          ]
+        }
+      ],
+      "actual_failed_stage": null,
+      "expected_failed_stage": null,
+      "error": null
+    },
+    {
+      "case_id": "EVAL-052",
+      "question": "Show cash in for partner cash payments.",
+      "category": "filter",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure",
+        "semantic_resolution_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "semantic_resolution",
+      "expected_failed_stage": null,
+      "error": "Semantic resolution failed (1 issue(s)): filter:paid_by: 'paid_by' is a known dimension ('paid_by') but isn't supported here. Supported dimensions: ['amount', 'cash_account_id', 'cash_account_name', 'collected_by', 'created_by', 'transaction_type']"
+    },
+    {
+      "case_id": "EVAL-056",
+      "question": "Show partner cash payments received this week.",
+      "category": "filter",
+      "difficulty": "medium",
+      "failure_types": [
+        "pipeline_failure",
+        "semantic_resolution_failure"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": "semantic_resolution",
+      "expected_failed_stage": null,
+      "error": "Semantic resolution failed (1 issue(s)): dimensions[0]: 'partner_name' is a known dimension ('partner_name') but isn't supported here. Supported dimensions: ['amount', 'cash_account_id', 'cash_account_name', 'collected_by', 'created_by', 'transaction_type']"
+    },
+    {
+      "case_id": "EVAL-069",
+      "question": "How is the business doing?",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "failure_types": [
+        "unknown_mismatch"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": null,
+      "expected_failed_stage": "parser",
+      "error": null
+    },
+    {
+      "case_id": "EVAL-070",
+      "question": "Show me everything.",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "failure_types": [
+        "unknown_mismatch"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": null,
+      "expected_failed_stage": "parser",
+      "error": null
+    },
+    {
+      "case_id": "EVAL-073",
+      "question": "What's our best marketing channel?",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "failure_types": [
+        "unknown_mismatch"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": null,
+      "expected_failed_stage": "semantic_resolution",
+      "error": null
+    },
+    {
+      "case_id": "EVAL-074",
+      "question": "Why did expenses go up?",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "failure_types": [
+        "unknown_mismatch"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": null,
+      "expected_failed_stage": "parser",
+      "error": null
+    },
+    {
+      "case_id": "EVAL-075",
+      "question": "Should we cut costs next quarter?",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "failure_types": [
+        "unknown_mismatch"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": null,
+      "expected_failed_stage": "parser",
+      "error": null
+    },
+    {
+      "case_id": "EVAL-077",
+      "question": "asdkjaslkdj sales??",
+      "category": "ambiguous_invalid",
+      "difficulty": "hard",
+      "failure_types": [
+        "unknown_mismatch"
+      ],
+      "field_diffs": [],
+      "actual_failed_stage": null,
+      "expected_failed_stage": "parser",
+      "error": null
+    }
+  ]
+}
+
+======================================================================
+EVALUATION COMPLETE
+======================================================================

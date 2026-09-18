@@ -45,6 +45,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable
 
 from etl.analytics.metrics.definitions import MetricDefinition
+from .planner_errors import QueryPlanningLimitError
 
 try:
     from .query_plan import (
@@ -181,6 +182,7 @@ def _request_filters(request: Any) -> tuple[PlanFilter, ...]:
 def plan_query(
     request: Any,
     resolve_metric: Callable[[str], MetricDefinition],
+    max_queries_per_request: int | None = None,
 ) -> QueryPlanResult:
     """
     Build a QueryPlanResult for `request`.
@@ -219,6 +221,12 @@ def plan_query(
     groups = _group_metrics(definitions)
 
     plans = [_build_query_plan(g, request) for g in groups]
+
+    if max_queries_per_request is not None and len(plans) > max_queries_per_request:
+        raise QueryPlanningLimitError(
+            f"Request requires {len(plans)} queries, but the maximum is "
+            f"{max_queries_per_request}."
+        )
 
     if len(plans) == 1:
         return plans[0]

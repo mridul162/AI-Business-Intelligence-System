@@ -95,6 +95,27 @@ def test_sort_and_limit():
     assert "LIMIT" in sql
 
 
+def test_result_limit_is_applied_when_plan_omits_limit():
+    plan = QueryPlan(source_view="analytics.v_sales", metrics=("gross_sales",))
+
+    built = build_query(plan, max_result_rows=1000)
+
+    assert "LIMIT" in compiled(built.statement)
+
+
+def test_result_limit_caps_requested_limit():
+    plan = QueryPlan(
+        source_view="analytics.v_sales",
+        metrics=("gross_sales",),
+        limit=5000,
+    )
+
+    built = build_query(plan, max_result_rows=1000)
+
+    compiled_statement = built.statement.compile(dialect=postgresql.dialect())
+    assert 1000 in compiled_statement.params.values()
+
+
 def test_unknown_metric_raises():
     plan = QueryPlan(source_view="analytics.v_sales", metrics=("not_a_real_metric",))
     with pytest.raises(UnknownMetricError):
