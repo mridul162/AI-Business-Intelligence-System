@@ -40,7 +40,7 @@ class DimensionValidator:
             "staging_key": "stg_customer_id",
             "core_table": "core.dim_customer",
             "core_id": "customer_id",
-            "current_column": "active",
+            "current_column": "is_current",
         },
         {
             "name": "dim_product",

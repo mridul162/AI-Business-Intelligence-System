@@ -35,7 +35,6 @@ isn't configured -- see the `postgres_engine` fixture.
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
@@ -58,10 +57,7 @@ from etl.analytics.sql.sql_builder import build_query
 # Test database connection
 # --------------------------------------------------------------------
 
-TEST_DB_URL = os.environ.get(
-    "AIBI_INTEGRATION_TEST_DB_URL",
-    "postgresql+psycopg2://aibi_test:aibi_test_pw@localhost:5432/aibi_test_db",
-)
+TEST_DB_URL = "postgresql+psycopg2://aibi_test:aibi_test_pw@localhost:5432/aibi_test_db"
 
 
 @pytest.fixture(scope="module")
