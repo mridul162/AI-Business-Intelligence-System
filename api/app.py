@@ -14,6 +14,7 @@ from api.security.models import InMemoryIdentityStore, IdentityStore
 from api.security.repository import SqlAlchemyIdentityStore
 from database.connection import get_sessionmaker
 from etl.analytics.config import Settings
+from etl.observability.logging import configure_logging
 
 
 def create_app(
@@ -23,6 +24,7 @@ def create_app(
     auth_enabled: bool | None = None,
 ) -> FastAPI:
     app = FastAPI(title="AI Business Intelligence API")
+    configure_logging()
 
     configured_auth = settings.auth_enabled if settings is not None else True
     if (

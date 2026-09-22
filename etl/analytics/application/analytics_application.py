@@ -19,6 +19,10 @@ from etl.analytics.semantic import (
 )
 from etl.analytics.semantic.time_resolver import resolve_analytical_query_time
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class TimeResolverFn(Protocol):
     """Resolve relative time information into an explicit query time range."""
@@ -95,24 +99,36 @@ class AnalyticsApplication:
             Public response contract for the analytics application.
         """
 
-        parsed_request = self.parser.parse(question)
+        logger.info("analytics_query_started")
 
-        resolved_query: ResolvedAnalyticalQuery = (
-            self.semantic_resolver.resolve(parsed_request)
-        )
+        try:
 
-        analytical_request = resolved_query.to_analytical_query_request()
+            parsed_request = self.parser.parse(question)
 
-        resolved_request = self.time_resolver(
-            analytical_request,
-            today=today,
-        )
+            resolved_query: ResolvedAnalyticalQuery = (
+                self.semantic_resolver.resolve(parsed_request)
+            )
 
-        analytical_result: AnalyticalResult = (
-            self.query_orchestrator.execute(resolved_request)
-        )
+            analytical_request = resolved_query.to_analytical_query_request()
 
-        return self.response_builder.build(
-            resolved_request,
-            analytical_result,
-        )
+            resolved_request = self.time_resolver(
+                analytical_request,
+                today=today,
+            )
+
+            analytical_result: AnalyticalResult = (
+                self.query_orchestrator.execute(resolved_request)
+            )
+
+            response = self.response_builder.build(
+                resolved_request,
+                analytical_result,
+            )
+
+            logger.info("analytics_query_completed")
+
+            return response
+
+        except Exception:
+            logger.exception("analytics_query_failed")
+            raise

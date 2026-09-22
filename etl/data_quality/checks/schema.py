@@ -123,8 +123,8 @@ def _inspector_for_session(session: Session):
     """Return a SQLAlchemy inspector bound to the session's engine."""
     if hasattr(session, "bind") and session.bind is not None:
         return inspect(session.bind)
-    if hasattr(session, "engine") and session.engine is not None:
-        return inspect(session.engine)
+    if hasattr(session, "engine") and session.engine is not None: # type: ignore
+        return inspect(session.engine) # type: ignore
     return inspect(session)
 
 
@@ -132,6 +132,7 @@ def table_exists_check(session: Session, table_name: str) -> DataQualityResult:
     """Validate that a named database table exists."""
     schema_name, table_ref = _normalize_table_reference(table_name)
     inspector = _inspector_for_session(session)
+    assert inspector is not None
     exists = inspector.has_table(table_ref, schema=schema_name)
 
     if exists:
@@ -155,6 +156,7 @@ def view_exists_check(session: Session, view_name: str) -> DataQualityResult:
     """Validate that a named database view exists."""
     schema_name, view_ref = _normalize_table_reference(view_name)
     inspector = _inspector_for_session(session)
+    assert inspector is not None
     view_names = inspector.get_view_names(schema=schema_name)
     exists = view_ref in view_names
 
@@ -183,6 +185,7 @@ def columns_exist_check(
     """Validate that all required columns exist in a table."""
     schema_name, table_ref = _normalize_table_reference(table_name)
     inspector = _inspector_for_session(session)
+    assert inspector is not None
     if not inspector.has_table(table_ref, schema=schema_name):
         return DataQualityResult(
             check_name=f"columns_exist:{table_name}",
@@ -220,6 +223,7 @@ def expected_column_types_check(
     """Validate that expected PostgreSQL column types match the live schema."""
     schema_name, table_ref = _normalize_table_reference(table_name)
     inspector = _inspector_for_session(session)
+    assert inspector is not None
     if not inspector.has_table(table_ref, schema=schema_name):
         return DataQualityResult(
             check_name=f"expected_types:{table_name}",
@@ -268,6 +272,7 @@ def required_not_null_columns_check(
     """Validate that required columns are not nullable in the live schema."""
     schema_name, table_ref = _normalize_table_reference(table_name)
     inspector = _inspector_for_session(session)
+    assert inspector is not None
     if not inspector.has_table(table_ref, schema=schema_name):
         return DataQualityResult(
             check_name=f"required_not_null:{table_name}",
