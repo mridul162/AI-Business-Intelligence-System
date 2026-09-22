@@ -19,6 +19,8 @@ from etl.analytics.semantic import (
 )
 from etl.analytics.semantic.time_resolver import resolve_analytical_query_time
 
+from etl.observability.timing import timed_stage
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -81,49 +83,52 @@ class AnalyticsApplication:
         *,
         today: date | None = None,
     ) -> AnalyticalResponse:
-        """
-        Execute the complete natural-language analytics use case.
-
-        Parameters
-        ----------
-        question:
-            User's natural-language analytical question.
-
-        today:
-            Optional reference date used for deterministic relative-time
-            resolution. Primarily useful for testing.
-
-        Returns
-        -------
-        AnalyticalResponse
-            Public response contract for the analytics application.
-        """
-
         logger.info("analytics_query_started")
 
         try:
+            with timed_stage(
+                "parsing",
+                logger=logger,
+            ):
+                parsed_request = self.parser.parse(question)
 
-            parsed_request = self.parser.parse(question)
+            with timed_stage(
+                "semantic_resolution",
+                logger=logger,
+            ):
+                resolved_query: ResolvedAnalyticalQuery = (
+                    self.semantic_resolver.resolve(parsed_request)
+                )
 
-            resolved_query: ResolvedAnalyticalQuery = (
-                self.semantic_resolver.resolve(parsed_request)
-            )
+            with timed_stage(
+                "time_resolution",
+                logger=logger,
+            ):
+                analytical_request = (
+                    resolved_query.to_analytical_query_request()
+                )
 
-            analytical_request = resolved_query.to_analytical_query_request()
+                resolved_request = self.time_resolver(
+                    analytical_request,
+                    today=today,
+                )
 
-            resolved_request = self.time_resolver(
-                analytical_request,
-                today=today,
-            )
+            with timed_stage(
+                "orchestration",
+                logger=logger,
+            ):
+                analytical_result: AnalyticalResult = (
+                    self.query_orchestrator.execute(resolved_request)
+                )
 
-            analytical_result: AnalyticalResult = (
-                self.query_orchestrator.execute(resolved_request)
-            )
-
-            response = self.response_builder.build(
-                resolved_request,
-                analytical_result,
-            )
+            with timed_stage(
+                "response_building",
+                logger=logger,
+            ):
+                response = self.response_builder.build(
+                    resolved_request,
+                    analytical_result,
+                )
 
             logger.info("analytics_query_completed")
 

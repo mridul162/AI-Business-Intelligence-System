@@ -42,6 +42,12 @@ from etl.analytics.sql.sql_models import BuiltQuery
 from .errors import InvalidPlanResultError, OrchestratorConfigurationError
 from .orchestration_models import AnalyticalResult
 
+import logging
+
+from etl.observability.timing import timed_stage
+
+logger = logging.getLogger(__name__)
+
 Planner = Callable[[Any], QueryPlanResult]
 Builder = Callable[[QueryPlan], BuiltQuery]
 
@@ -102,7 +108,11 @@ class AnalyticsQueryOrchestrator:
         unchanged, plus InvalidPlanResultError if the planner returns
         something that is neither a QueryPlan nor a MultiQueryPlan.
         """
-        plan_result = self._planner(request)
+        with timed_stage(
+            "planning",
+            logger=logger,
+        ):
+            plan_result = self._planner(request)
 
         if isinstance(plan_result, QueryPlan):
             return self._execute_single(plan_result)
@@ -116,19 +126,52 @@ class AnalyticsQueryOrchestrator:
         )
 
     def _execute_single(self, plan: QueryPlan) -> AnalyticalResult:
-        built_query = self._builder(plan)
-        execution_result = self._executor.execute(built_query)
+        with timed_stage(
+            "sql_building",
+            logger=logger,
+        ):
+            built_query = self._builder(plan)
+
+        with timed_stage(
+            "database_execution",
+            logger=logger,
+        ):
+            execution_result = self._executor.execute(built_query)
+
         return AnalyticalResult.from_execution_result(execution_result)
 
     def _execute_multi(self, multi_plan: MultiQueryPlan) -> AnalyticalResult:
         executed_queries: list[ExecutedQuery] = []
 
-        for plan in multi_plan.plans:
-            built_query = self._builder(plan)
-            execution_result = self._executor.execute(built_query)
+        for index, plan in enumerate(multi_plan.plans):
+            with timed_stage(
+                "sql_building",
+                logger=logger,
+                plan_index=index,
+            ):
+                built_query = self._builder(plan)
+
+            with timed_stage(
+                "database_execution",
+                logger=logger,
+                plan_index=index,
+            ):
+                execution_result = self._executor.execute(built_query)
+
             executed_queries.append(
-                ExecutedQuery(built_query=built_query, result=execution_result)
+                ExecutedQuery(
+                    built_query=built_query,
+                    result=execution_result,
+                )
             )
 
-        merged_result = self._merger.merge(multi_plan, tuple(executed_queries))
+        with timed_stage(
+            "result_merging",
+            logger=logger,
+        ):
+            merged_result = self._merger.merge(
+                multi_plan,
+                tuple(executed_queries),
+            )
+
         return AnalyticalResult.from_merged_result(merged_result)
