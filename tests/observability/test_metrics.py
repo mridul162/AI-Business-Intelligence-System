@@ -1,3 +1,4 @@
+from etl.observability import metrics
 from etl.observability.metrics import MetricsCollector
 
 
@@ -76,3 +77,26 @@ def test_reset_clears_metrics() -> None:
 
     assert snapshot["counters"] == {}
     assert snapshot["timings"] == {}
+
+
+def test_add_accumulates_numeric_metric() -> None:
+    metrics = MetricsCollector()
+
+    metrics.add("llm_input_tokens", 11)
+    metrics.add("llm_input_tokens", 7)
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot["totals"]["llm_input_tokens"] == 18  # type: ignore
+
+
+def test_add_supports_multiple_metrics() -> None:
+    metrics = MetricsCollector()
+
+    metrics.add("llm_input_tokens", 11)
+    metrics.add("llm_output_tokens", 7)
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot["totals"]["llm_input_tokens"] == 11 # type: ignore
+    assert snapshot["totals"]["llm_output_tokens"] == 7 # type: ignore

@@ -9,6 +9,8 @@ from openai import OpenAI
 from etl.analytics.context.request_context import get_request_context
 from etl.analytics.nl_query.parser import CompletionFn, CompletionRequest
 from etl.analytics.providers.usage import LLMUsageRecord, UsageRecorder
+from etl.observability.metrics import metrics
+from etl.analytics.providers.pricing import ModelPricing
 
 
 @dataclass(frozen=True)
@@ -21,6 +23,7 @@ class OpenAICompletionConfig:
     max_attempts: int = 3
     retry_initial_backoff: float = 0.5
     retry_max_backoff: float = 2.0
+    pricing: ModelPricing | None = None
 
 
 class OpenAICompletionProvider:
@@ -80,14 +83,30 @@ class OpenAICompletionProvider:
     def __call__(self, request: CompletionRequest) -> str:
         """Generate a completion using the OpenAI Responses API."""
 
+        metrics.increment("llm_requests_total")
+
         last_error: Exception | None = None
 
         for attempt in range(1, self.config.max_attempts + 1):
+            metrics.increment("llm_attempts_total")
+
             started_at = time.perf_counter()
+
             try:
                 output, response = self._complete(request)
-                self._record_usage(response, attempt, time.perf_counter() - started_at)
+
+                latency_seconds = time.perf_counter() - started_at
+
+                self._record_usage(
+                    response,
+                    attempt,
+                    latency_seconds,
+                )
+
+                metrics.increment("llm_requests_successful")
+
                 return output
+
             except Exception as exc:
                 last_error = exc
 
@@ -95,13 +114,17 @@ class OpenAICompletionProvider:
                     not self._is_retryable_error(exc)
                     or attempt >= self.config.max_attempts
                 ):
+                    metrics.increment("llm_requests_failed")
                     raise
+
+                metrics.increment("llm_retries_total")
 
                 delay = self._calculate_backoff(attempt)
                 time.sleep(delay)
 
         # Defensive guard. The loop either returns or raises.
         assert last_error is not None
+        metrics.increment("llm_requests_failed")
         raise last_error
 
     def _complete(self, request: CompletionRequest) -> tuple[str, object]:
@@ -142,19 +165,64 @@ class OpenAICompletionProvider:
         latency_seconds: float,
     ) -> None:
         usage = getattr(response, "usage", None)
+
         request_context = get_request_context()
+
+        input_tokens = _usage_value(
+            usage,
+            "input_tokens",
+        )
+        output_tokens = _usage_value(
+            usage,
+            "output_tokens",
+        )
+        total_tokens = _usage_value(
+            usage,
+            "total_tokens",
+        )
+
+        if input_tokens is not None:
+            metrics.add("llm_input_tokens", input_tokens)
+
+        if output_tokens is not None:
+            metrics.add("llm_output_tokens", output_tokens)
+
+        if total_tokens is not None:
+            metrics.add("llm_total_tokens", total_tokens)
+
+        if (
+            self.config.pricing is not None
+            and input_tokens is not None
+            and output_tokens is not None
+        ):
+            estimated_cost = self.config.pricing.calculate_cost(
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+            )
+            metrics.add("llm_estimated_cost", estimated_cost)
+
         record = LLMUsageRecord(
             request_id=request_context.request_id if request_context else None,
             model=self.config.model,
-            input_tokens=_usage_value(usage, "input_tokens"),
-            output_tokens=_usage_value(usage, "output_tokens"),
-            total_tokens=_usage_value(usage, "total_tokens"),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens,
             latency_seconds=latency_seconds,
             attempt=attempt,
         )
+
         self.usage_records.append(record)
+
         if self.usage_recorder is not None:
             self.usage_recorder.record(record)
+
+        metrics.observe(
+            "llm_duration_ms",
+            latency_seconds * 1000,
+            labels={"model": self.config.model},
+        )
+
+            
     @staticmethod
     def _is_retryable_error(exc: Exception) -> bool:
         """

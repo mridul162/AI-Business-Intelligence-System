@@ -44,14 +44,18 @@ class MetricsCollector:
     Lightweight in-process metrics collector.
 
     This is intentionally application-local. It provides basic
-    counters and timing aggregation without introducing an external
-    metrics backend.
+    counters, numeric totals, and timing aggregation without
+    introducing an external metrics backend.
     """
 
     def __init__(self) -> None:
         self._lock = Lock()
         self._counters: dict[str, CounterMetric] = {}
-        self._timings: dict[tuple[str, tuple[tuple[str, str], ...]], TimingMetric] = {}
+        self._totals: dict[str, int | float] = {}
+        self._timings: dict[
+            tuple[str, tuple[tuple[str, str], ...]],
+            TimingMetric,
+        ] = {}
 
     def increment(
         self,
@@ -67,6 +71,18 @@ class MetricsCollector:
                 CounterMetric(),
             )
             metric.value += 1
+
+    def add(
+        self,
+        name: str,
+        value: int | float,
+    ) -> None:
+        """Accumulate a numeric metric total."""
+
+        with self._lock:
+            self._totals[name] = (
+                self._totals.get(name, 0) + value
+            )
 
     def observe(
         self,
@@ -98,6 +114,8 @@ class MetricsCollector:
                 for name, metric in self._counters.items()
             }
 
+            totals = dict(self._totals)
+
             timings = {}
 
             for (name, labels), metric in self._timings.items():
@@ -118,12 +136,14 @@ class MetricsCollector:
 
             return {
                 "counters": counters,
+                "totals": totals,
                 "timings": timings,
             }
 
     def reset(self) -> None:
         with self._lock:
             self._counters.clear()
+            self._totals.clear()
             self._timings.clear()
 
 

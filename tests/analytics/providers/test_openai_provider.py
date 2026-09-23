@@ -16,6 +16,14 @@ from etl.analytics.providers.openai_provider import (
     OpenAICompletionProvider,
     create_openai_completion,
 )
+from etl.analytics.providers.pricing import ModelPricing
+from etl.observability.metrics import metrics
+
+@pytest.fixture(autouse=True)
+def reset_metrics():
+    metrics.reset()
+    yield
+    metrics.reset()
 
 
 @dataclass
@@ -619,3 +627,175 @@ def test_openai_provider_retries_transient_openai_errors(
 
     assert result == '{"metric": "gross_sales"}'
     assert client.responses.create.call_count == 2
+
+
+def test_openai_provider_records_request_metrics() -> None:
+    client = FakeClient('{"metric": "capital_invested"}')
+
+    client.responses.create = Mock(
+        return_value=SimpleNamespace(
+            output_text='{"metric": "capital_invested"}',
+            usage=SimpleNamespace(
+                input_tokens=11,
+                output_tokens=7,
+                total_tokens=18,
+            ),
+        )
+    )
+
+    provider = OpenAICompletionProvider(
+        client=client,  # type: ignore[arg-type]
+        config=OpenAICompletionConfig(
+            model="gpt-test",
+            api_key="test-key",
+        ),
+    )
+
+    provider(_completion_request())
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot["counters"]["llm_requests_total"] == 1          #type: ignore
+    assert snapshot["counters"]["llm_requests_successful"] == 1     #type: ignore
+    assert snapshot["counters"].get("llm_requests_failed", 0) == 0  #type: ignore
+    assert snapshot["counters"]["llm_attempts_total"] == 1          #type: ignore
+    assert snapshot["counters"].get("llm_retries_total", 0) == 0    #type: ignore
+
+    assert snapshot["totals"]["llm_input_tokens"] == 11             #type: ignore 
+    assert snapshot["totals"]["llm_total_tokens"] == 18             #type: ignore
+
+
+def test_openai_provider_records_retry_metrics() -> None:
+    client = FakeClient(
+        output_text='{"metric": "capital_invested"}',
+        errors=[
+            _timeout_error(),
+        ],
+    )
+
+    provider = OpenAICompletionProvider(
+        client=client,  # type: ignore[arg-type]
+        config=OpenAICompletionConfig(
+            model="gpt-test",
+            api_key="test-key",
+            max_attempts=3,
+            retry_initial_backoff=0,
+            retry_max_backoff=0,
+        ),
+    )
+
+    provider(_completion_request())
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot["counters"]["llm_requests_total"] == 1 #type: ignore
+    assert snapshot["counters"]["llm_requests_successful"] == 1 #type: ignore
+    assert snapshot["counters"].get("llm_requests_failed", 0) == 0 #type: ignore
+    assert snapshot["counters"]["llm_attempts_total"] == 2 #type: ignore
+    assert snapshot["counters"]["llm_retries_total"] == 1 #type: ignore
+
+
+def test_openai_provider_records_final_failure_metrics() -> None:
+    client = FakeClient(
+        errors=[
+            _timeout_error(),
+            _timeout_error(),
+        ],
+    )
+
+    provider = OpenAICompletionProvider(
+        client=client,  # type: ignore[arg-type]
+        config=OpenAICompletionConfig(
+            model="gpt-test",
+            api_key="test-key",
+            max_attempts=2,
+            retry_initial_backoff=0,
+            retry_max_backoff=0,
+        ),
+    )
+
+    with pytest.raises(openai.APITimeoutError):
+        provider(_completion_request())
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot["counters"]["llm_requests_total"] == 1 # type: ignore
+    assert snapshot["counters"].get("llm_requests_successful", 0) == 0 # type: ignore
+    assert snapshot["counters"]["llm_requests_failed"] == 1 # type: ignore
+    assert snapshot["counters"]["llm_attempts_total"] == 2  # type: ignore
+    assert snapshot["counters"]["llm_retries_total"] == 1 # type: ignore
+
+    assert snapshot["totals"].get("llm_input_tokens", 0) == 0 # type: ignore
+    assert snapshot["totals"].get("llm_output_tokens", 0) == 0 # type: ignore
+    assert snapshot["totals"].get("llm_total_tokens", 0) == 0 # type: ignore
+
+
+def test_openai_provider_records_llm_latency_metric() -> None:
+    client = FakeClient('{"metric": "capital_invested"}')
+
+    client.responses.create = Mock(
+        return_value=SimpleNamespace(
+            output_text='{"metric": "capital_invested"}',
+            usage=SimpleNamespace(
+                input_tokens=11,
+                output_tokens=7,
+                total_tokens=18,
+            ),
+        )
+    )
+
+    provider = OpenAICompletionProvider(
+        client=client,  # type: ignore[arg-type]
+        config=OpenAICompletionConfig(
+            model="gpt-test",
+            api_key="test-key",
+        ),
+    )
+
+    provider(_completion_request())
+
+    snapshot = metrics.snapshot()
+
+    timing = next(
+        value
+        for key, value in snapshot["timings"].items() # type: ignore
+        if "llm_duration_ms" in key
+    )
+
+    assert timing["count"] == 1
+    assert timing["total_ms"] >= 0
+    assert timing["min_ms"] >= 0
+    assert timing["max_ms"] >= 0
+
+
+def test_openai_provider_records_estimated_cost() -> None:
+    client = FakeClient('{"metric": "capital_invested"}')
+    client.responses.create = Mock(
+        return_value=SimpleNamespace(
+            output_text='{"metric": "capital_invested"}',
+            usage=SimpleNamespace(
+                input_tokens=1_000_000,
+                output_tokens=500_000,
+                total_tokens=1_500_000,
+            ),
+        )
+    )
+
+    provider = OpenAICompletionProvider(
+        client=client,  # type: ignore[arg-type]
+        config=OpenAICompletionConfig(
+            model="gpt-test",
+            api_key="test-key",
+            pricing=ModelPricing(
+                input_price_per_million=1.0,
+                output_price_per_million=2.0,
+            ),
+        ),
+    )
+
+    provider(_completion_request())
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot["totals"]["llm_estimated_cost"] == 2.0 # type: ignore
+ 
