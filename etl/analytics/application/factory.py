@@ -60,7 +60,13 @@ def create_analytics_application(
     orchestrator = AnalyticsQueryOrchestrator(
         planner=planner,
         builder=builder,
-        executor=executor if executor is not None else QueryExecutor(),
+        executor=(
+            executor
+            if executor is not None
+            else QueryExecutor(
+                slow_query_threshold_ms=settings.db_slow_query_threshold_ms,
+            )
+        ),
         merger=ResultMerger(),
     )
 

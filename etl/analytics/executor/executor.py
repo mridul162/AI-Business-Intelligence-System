@@ -12,10 +12,12 @@ result.
 from __future__ import annotations
 
 import time
+import logging
 from typing import Optional
 
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
+from etl.observability.metrics import metrics
 
 # ADAPTER NOTE: I was given connection.py in isolation, without its
 # package location in your project. This assumes it lives at
@@ -28,6 +30,8 @@ from etl.analytics.sql.sql_models import BuiltQuery
 
 from .errors import DatabaseConnectionError, QueryExecutionFailedError
 from .execution_models import ExecutionResult
+
+logger = logging.getLogger(__name__)
 
 
 class QueryExecutor:
@@ -42,8 +46,17 @@ class QueryExecutor:
             it never constructs its own Engine.
     """
 
-    def __init__(self, engine: Optional[Engine] = None) -> None:
+    def __init__(
+        self,
+        engine: Optional[Engine] = None,
+        slow_query_threshold_ms: float = 500.0,
+    ) -> None:
+
+        if slow_query_threshold_ms <= 0:
+            raise ValueError("slow_query_threshold_ms must be greater than 0.")
+        
         self._engine = engine
+        self._slow_query_threshold_ms = slow_query_threshold_ms
 
     def _resolve_engine(self) -> Engine:
         return self._engine if self._engine is not None else get_engine()
@@ -57,11 +70,14 @@ class QueryExecutor:
             QueryExecutionFailedError: a connection was obtained but
                 executing or fetching the statement failed.
             Anything else (TypeError, AttributeError, a bug in our
-                code, ...) is NOT caught here and propagates as-is.
+            code, ...) is NOT caught here and propagates as-is.
         """
         engine = self._resolve_engine()
 
+        metrics.increment("db_queries_total")
+
         start = time.perf_counter()
+
         try:
             with engine.connect() as connection:
                 try:
@@ -69,15 +85,41 @@ class QueryExecutor:
                     columns = tuple(result.keys())
                     rows = tuple(dict(m) for m in result.mappings())
                 except SQLAlchemyError as exc:
+                    metrics.increment("db_queries_failed")
                     raise QueryExecutionFailedError(
                         "Query execution failed."
                     ) from exc
+
         except SQLAlchemyError as exc:
+            metrics.increment("db_queries_failed")
             raise DatabaseConnectionError(
                 "Failed to open a database connection."
             ) from exc
 
         duration = time.perf_counter() - start
+
+        duration_ms = duration * 1000
+
+        if duration_ms > self._slow_query_threshold_ms:
+            logger.warning(
+                "db_slow_query_detected "
+                "duration_ms=%.2f "
+                "threshold_ms=%.2f "
+                "row_count=%d",
+                duration_ms,
+                self._slow_query_threshold_ms,
+                len(rows),
+            )
+
+        metrics.increment("db_queries_successful")
+        metrics.observe(
+            "db_query_duration_ms",
+            duration_ms,
+        )
+        metrics.add(
+            "db_rows_returned",
+            len(rows),
+        )
 
         return ExecutionResult(
             columns=columns,

@@ -14,6 +14,13 @@ from etl.analytics.executor import (
 )
 from etl.analytics.planner.query_plan import QueryPlan
 from etl.analytics.sql.sql_models import BuiltQuery
+from etl.observability.metrics import metrics
+
+@pytest.fixture(autouse=True)
+def reset_metrics():
+    metrics.reset()
+    yield
+    metrics.reset()
 
 
 @pytest.fixture
@@ -157,6 +164,32 @@ def test_duration_is_non_negative_float(sqlite_engine):
     assert result.duration_seconds >= 0.0
 
 
+def test_successful_execution_records_db_metrics(sqlite_engine):
+    engine, sales = sqlite_engine
+    stmt = select(sales.c.id)
+    built_query = _built_query(stmt)
+
+    result = QueryExecutor(engine=engine).execute(built_query)
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot["counters"]["db_queries_total"] == 1  # type: ignore
+    assert snapshot["counters"]["db_queries_successful"] == 1  # type: ignore
+    assert snapshot["counters"].get("db_queries_failed", 0) == 0  # type: ignore
+
+    assert snapshot["totals"]["db_rows_returned"] == result.row_count  # type: ignore
+
+    timings = snapshot["timings"]
+    db_timing = next(
+        value
+        for key, value in timings.items()  # type: ignore
+        if "'name': 'db_query_duration_ms'" in key
+    )
+
+    assert db_timing["count"] == 1
+    assert db_timing["total_ms"] >= 0
+
+
 # --------------------------------------------------------------------
 # Empty result -> still successful
 # --------------------------------------------------------------------
@@ -172,6 +205,20 @@ def test_empty_result_is_successful(sqlite_engine):
     assert result.rows == ()
     assert result.row_count == 0
     assert result.columns == ("id",)  # keys() available even with 0 rows
+
+
+def test_empty_result_records_zero_rows(sqlite_engine):
+    engine, sales = sqlite_engine
+    stmt = select(sales.c.id).where(sales.c.id == 999)
+    built_query = _built_query(stmt)
+
+    QueryExecutor(engine=engine).execute(built_query)
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot["counters"]["db_queries_total"] == 1  # type: ignore
+    assert snapshot["counters"]["db_queries_successful"] == 1  # type: ignore
+    assert snapshot["totals"]["db_rows_returned"] == 0  # type: ignore
 
 
 # --------------------------------------------------------------------
@@ -192,6 +239,26 @@ def test_connection_failure_becomes_database_connection_error():
     assert isinstance(excinfo.value.__cause__, SQLAlchemyError)
 
 
+def test_connection_failure_records_db_failure_metric():
+    fake_engine = MagicMock()
+    fake_engine.connect.side_effect = OperationalError(
+        "connect failed",
+        None,
+        None,  # type: ignore
+    )
+
+    built_query = _built_query(select(text("1")))
+
+    with pytest.raises(DatabaseConnectionError):
+        QueryExecutor(engine=fake_engine).execute(built_query)
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot["counters"]["db_queries_total"] == 1  # type: ignore
+    assert snapshot["counters"]["db_queries_failed"] == 1  # type: ignore
+    assert snapshot["counters"].get("db_queries_successful", 0) == 0  # type: ignore
+
+
 def test_execution_failure_becomes_query_execution_failed_error(sqlite_engine):
     engine, _sales = sqlite_engine
     # Selecting from a table that doesn't exist -> fails at execute time,
@@ -203,6 +270,22 @@ def test_execution_failure_becomes_query_execution_failed_error(sqlite_engine):
         QueryExecutor(engine=engine).execute(built_query)
 
     assert isinstance(excinfo.value.__cause__, SQLAlchemyError)
+
+
+def test_execution_failure_records_db_failure_metric(sqlite_engine):
+    engine, _sales = sqlite_engine
+
+    stmt = select(text("*")).select_from(text("does_not_exist"))
+    built_query = _built_query(stmt)
+
+    with pytest.raises(QueryExecutionFailedError):
+        QueryExecutor(engine=engine).execute(built_query)
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot["counters"]["db_queries_total"] == 1  # type: ignore
+    assert snapshot["counters"]["db_queries_failed"] == 1  # type: ignore
+    assert snapshot["counters"].get("db_queries_successful", 0) == 0  # type: ignore
 
 
 def test_non_sqlalchemy_exception_passes_through(sqlite_engine):
@@ -279,3 +362,21 @@ def test_no_engine_falls_back_to_get_engine(monkeypatch, sqlite_engine):
     stmt = select(sales.c.id)
     result = QueryExecutor().execute(_built_query(stmt))
     assert result.row_count == 3
+
+def test_slow_query_is_logged(sqlite_engine, caplog):
+    engine, sales = sqlite_engine
+    stmt = select(sales.c.id)
+    built_query = _built_query(stmt)
+
+    with caplog.at_level("WARNING"):
+        QueryExecutor(
+            engine=engine,
+            slow_query_threshold_ms=0.000001,
+        ).execute(built_query)
+
+    assert "db_slow_query_detected" in caplog.text
+
+
+def test_invalid_slow_query_threshold_is_rejected():
+    with pytest.raises(ValueError, match="slow_query_threshold_ms"):
+        QueryExecutor(slow_query_threshold_ms=0)

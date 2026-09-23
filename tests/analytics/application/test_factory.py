@@ -32,6 +32,7 @@ def make_settings() -> Settings:
         db_echo=False,
         db_pool_size=5,
         db_max_overflow=10,
+        db_slow_query_threshold_ms=500.0,
     )
 
 
@@ -127,7 +128,9 @@ def test_create_analytics_application_creates_executor_when_not_supplied() -> No
             completion=completion,
         )
 
-    mock_executor.assert_called_once()
+    mock_executor.assert_called_once_with(
+        slow_query_threshold_ms=500.0,
+    )
 
     kwargs = mock_orchestrator.call_args.kwargs
 

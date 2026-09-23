@@ -134,6 +134,12 @@ class Settings(BaseSettings):
         gt=0,
         validation_alias="AIBI_DB_POOL_TIMEOUT",
     )
+
+    db_slow_query_threshold_ms: float = Field(
+        default=500.0,
+        gt=0,
+        validation_alias="AIBI_DB_SLOW_QUERY_THRESHOLD_MS",
+    )
     
     # ------------------------------------------------------------------
     # Rate Limiting
