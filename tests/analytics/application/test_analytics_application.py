@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import cast
 
 from unittest.mock import Mock
+
+import pytest
 
 from etl.analytics.application.analytics_application import AnalyticsApplication
 from etl.analytics.orchestration import AnalyticalResult
@@ -11,6 +14,13 @@ from etl.analytics.response.builder import AnalyticalResponse
 from etl.analytics.response.models import AnalyticalResponseStatus
 from etl.analytics.schemas import AnalyticalQueryRequest
 from etl.analytics.semantic import ResolvedAnalyticalQuery
+from etl.observability.metrics import metrics
+
+@pytest.fixture(autouse=True)
+def reset_metrics():
+    metrics.reset()
+    yield
+    metrics.reset()
 
 
 def make_request() -> AnalyticalQueryRequest:
@@ -205,6 +215,19 @@ class TestAnalyticsApplication:
 
         assert actual is expected
 
+    def test_query_records_success_metrics(self) -> None:
+        self.application.query("What are my total sales?")
+
+        snapshot = metrics.snapshot()
+        counters = cast(dict[str, int], snapshot["counters"])
+
+        assert counters["analytics_queries_total"] == 1
+        assert counters["analytics_queries_successful"] == 1
+        assert counters.get("analytics_queries_failed", 0) == 0
+
+        timings = cast(list[object], snapshot["timings"])
+        assert len(timings) >= 1
+
 
 class TestAnalyticsApplicationErrorPropagation:
     def test_parser_error_propagates(self) -> None:
@@ -284,3 +307,32 @@ class TestAnalyticsApplicationErrorPropagation:
             assert exc is error
         else:
             raise AssertionError("Expected orchestrator error to propagate")
+
+
+    def test_parser_error_records_failure_metrics(self) -> None:
+        error = ValueError("invalid parser output")
+
+        parser = Mock()
+        parser.parse.side_effect = error
+
+        application = AnalyticsApplication(
+            parser=parser,
+            semantic_resolver=Mock(),
+            query_orchestrator=Mock(),
+            response_builder=Mock(),
+            time_resolver=Mock(),
+        )
+
+        try:
+            application.query("invalid question")
+        except ValueError as exc:
+            assert exc is error
+        else:
+            raise AssertionError("Expected parser error to propagate")
+
+        snapshot = metrics.snapshot()
+        counters = cast(dict[str, int], snapshot["counters"])
+
+        assert counters["analytics_queries_total"] == 1
+        assert counters["analytics_queries_failed"] == 1
+        assert counters.get("analytics_queries_successful", 0) == 0

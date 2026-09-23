@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from typing import Callable, Protocol
+from time import perf_counter
 
 from etl.analytics.orchestration import (
     AnalyticsQueryOrchestrator,
@@ -20,6 +21,7 @@ from etl.analytics.semantic import (
 from etl.analytics.semantic.time_resolver import resolve_analytical_query_time
 
 from etl.observability.timing import timed_stage
+from etl.observability.metrics import metrics
 
 import logging
 
@@ -83,18 +85,24 @@ class AnalyticsApplication:
         *,
         today: date | None = None,
     ) -> AnalyticalResponse:
+        started_at = perf_counter()
+
+        metrics.increment("analytics_queries_total")
+
         logger.info("analytics_query_started")
 
         try:
             with timed_stage(
                 "parsing",
                 logger=logger,
+                metrics=metrics,
             ):
                 parsed_request = self.parser.parse(question)
 
             with timed_stage(
                 "semantic_resolution",
                 logger=logger,
+                metrics=metrics,
             ):
                 resolved_query: ResolvedAnalyticalQuery = (
                     self.semantic_resolver.resolve(parsed_request)
@@ -103,6 +111,7 @@ class AnalyticsApplication:
             with timed_stage(
                 "time_resolution",
                 logger=logger,
+                metrics=metrics,
             ):
                 analytical_request = (
                     resolved_query.to_analytical_query_request()
@@ -116,6 +125,7 @@ class AnalyticsApplication:
             with timed_stage(
                 "orchestration",
                 logger=logger,
+                metrics=metrics,
             ):
                 analytical_result: AnalyticalResult = (
                     self.query_orchestrator.execute(resolved_request)
@@ -124,16 +134,30 @@ class AnalyticsApplication:
             with timed_stage(
                 "response_building",
                 logger=logger,
+                metrics=metrics,
             ):
                 response = self.response_builder.build(
                     resolved_request,
                     analytical_result,
                 )
 
+            metrics.increment("analytics_queries_successful")
+
             logger.info("analytics_query_completed")
 
             return response
 
         except Exception:
+            metrics.increment("analytics_queries_failed")
+
             logger.exception("analytics_query_failed")
+
             raise
+
+        finally:
+            duration_ms = (perf_counter() - started_at) * 1000
+
+            metrics.observe(
+                "analytics_query_duration_ms",
+                duration_ms,
+            )

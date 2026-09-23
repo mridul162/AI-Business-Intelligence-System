@@ -6,6 +6,8 @@ import pytest
 
 from etl.observability.timing import timed_stage
 
+from etl.observability.metrics import MetricsCollector
+
 
 def test_timed_stage_logs_duration(caplog):
     logger = logging.getLogger("test.timing")
@@ -41,3 +43,28 @@ def test_timed_stage_logs_failure_and_reraises(caplog):
 
     assert "stage=failing_stage" in record.message
     assert "duration_ms=" in record.message
+
+
+def test_timed_stage_records_metrics() -> None:
+    metrics = MetricsCollector()
+    logger = logging.getLogger("test.timing")
+
+    with timed_stage(
+        "parsing",
+        logger=logger,
+        metrics=metrics,
+    ):
+        pass
+
+    snapshot = metrics.snapshot()
+
+    timing = next(
+        value 
+        for key, value in snapshot["timings"].items() # type: ignore 
+        if "parsing" in key
+    )
+
+    assert timing["count"] == 1
+    assert timing["total_ms"] >= 0
+    assert timing["min_ms"] >= 0
+    assert timing["max_ms"] >= 0
