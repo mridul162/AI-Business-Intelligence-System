@@ -60,6 +60,18 @@ class Settings(BaseSettings):
         validation_alias="AIBI_LLM_RETRY_MAX_BACKOFF",
     )
 
+    llm_input_price_per_million: float = Field(
+        default=0.4*150,
+        ge=0,
+        validation_alias="AIBI_LLM_INPUT_PRICE_PER_MILLION",
+    )
+
+    llm_output_price_per_million: float = Field(
+        default=1.60*150,
+        ge=0,
+        validation_alias="AIBI_LLM_OUTPUT_PRICE_PER_MILLION",
+    )
+
     # ------------------------------------------------------------------
     # Application
     # ------------------------------------------------------------------

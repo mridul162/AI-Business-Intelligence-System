@@ -20,12 +20,21 @@ from etl.analytics.planner.query_planner import plan_query
 from etl.analytics.response.builder import AnalyticalResponseBuilder
 from etl.analytics.semantic import SemanticResolver
 from etl.analytics.sql.sql_builder import build_query
+from etl.analytics.providers.pricing import ModelPricing
+
+settings = get_settings()
+
+pricing = ModelPricing(
+    input_price_per_million=settings.llm_input_price_per_million,
+    output_price_per_million=settings.llm_output_price_per_million,
+)
 
 
 def get_nl_completion(settings: Settings) -> CompletionFn:
     return create_openai_completion(
         model=settings.nl_query_model,
         api_key=settings.openai_api_key,
+        pricing=pricing,
         timeout=settings.llm_timeout,
         max_attempts=settings.llm_max_attempts,
         retry_initial_backoff=settings.llm_retry_initial_backoff,

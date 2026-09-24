@@ -268,6 +268,7 @@ def create_openai_completion(
     max_attempts: int = 3,
     retry_initial_backoff: float = 0.5,
     retry_max_backoff: float = 2.0,
+    pricing: ModelPricing | None = None,
     usage_recorder: UsageRecorder | None = None,
 ) -> CompletionFn:
     """Create an OpenAI-backed CompletionFn."""
@@ -279,9 +280,14 @@ def create_openai_completion(
         max_attempts=max_attempts,
         retry_initial_backoff=retry_initial_backoff,
         retry_max_backoff=retry_max_backoff,
+        pricing=pricing,
     )
+
     if usage_recorder is None:
-        return OpenAICompletionProvider(config=config)
+        return OpenAICompletionProvider(
+            config=config,
+        )
+
     return OpenAICompletionProvider(
         config=config,
         usage_recorder=usage_recorder,
