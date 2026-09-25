@@ -1,11 +1,11 @@
-(.venv) PS D:\Projects\LLM Repos\AI-Business-Intelligence-System> python -m scripts.validate_analytics_observability
+(.venv) PS D:\Projects\LLM Repos\AI-Business-Intelligence-System> python -m scripts.validate_analytics_observability                             
 ========================================================================
 AI-BI ANALYTICS + OBSERVABILITY VALIDATION
 ========================================================================
 Enter a natural-language analytical question.
 Type 'exit' or 'quit' to stop.
 
-Question: what is our net sales this month?
+Question: what are our net sales and expenses last month? 
 
 ========================================================================
 ANALYTICAL ANSWER
@@ -14,11 +14,12 @@ Status: SUCCESS
 
 Answer
 ------
-Net Sales:          0
+Net Sales:          9230.00
+Total Expenses:     3700.00
 
 Query
 -----
-Metrics:            net_sales
+Metrics:            net_sales, total_expenses
 Dimensions:         None
 Filters:            None
 Time grain:         None
@@ -30,31 +31,30 @@ PERFORMANCE REPORT
 ========================================================================
 Pipeline
 --------
-Total:              2719.38 ms
+Total:              2866.36 ms
 
 Stages
 ------
-Parsing:            2634.35 ms
-Semantic:           0.03 ms
+Parsing:            2775.20 ms
+Semantic:           0.06 ms
 Time resolution:    0.14 ms
-Orchestration:      84.73 ms
+Orchestration:      90.82 ms
 Response:           0.02 ms
 
 Database
 --------
-Queries:            1
-Successful:         1
-Rows returned:      1
-Duration:           42.73 ms
+Queries:            2
+Successful:         2
+Rows returned:      2
+Duration:           48.00 ms
 
 LLM
 ---
 Model:              gpt-4.1-mini
 Requests:           1
 Attempts:           1
-Input tokens:       3994
-Output tokens:      61
-Total tokens:       4055
-Duration:           2633.93 ms
-
-
+Input tokens:       3996
+Output tokens:      65
+Total tokens:       4061
+Duration:           2774.77 ms
+Estimated cost:     0.255360৳

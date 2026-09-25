@@ -25,6 +25,7 @@ from etl.analytics.planner.planner_errors import QueryPlanningLimitError
 from api.security.dependencies import require_authenticated_user
 from api.security.models import User
 from etl.analytics.sql.errors import SQLBuilderError
+from etl.analytics.merger.errors import ResultMergeError
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -127,6 +128,24 @@ def query_analytics(
             message="Unable to execute the analytical query.",
             stage="query_execution",
             http_status=status.HTTP_502_BAD_GATEWAY,
+            cause=exc,
+        )
+
+    except ResultMergeError as exc:
+        _raise_api_error(
+            code="RESULT_MERGE_FAILED",
+            message="Failed to combine analytical query results.",
+            stage="result_merging",
+            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            cause=exc,
+        )
+
+    except Exception as exc:
+        _raise_api_error(
+            code="INTERNAL_SERVER_ERROR",
+            message="An unexpected internal error occurred.",
+            stage="internal",
+            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             cause=exc,
         )
 

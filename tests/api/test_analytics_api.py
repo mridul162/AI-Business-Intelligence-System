@@ -15,6 +15,7 @@ from etl.analytics.response.models import (
     ResponseMetadata,
 )
 from etl.analytics.semantic.models import ResolutionResult, SemanticResolutionError
+from etl.analytics.merger.errors import ResultMergeError
 
 
 class StubAnalyticsApplication:
@@ -27,6 +28,12 @@ class StubAnalyticsApplication:
     def query(self, text: str) -> AnalyticalResponse:
         self.questions.append(text)
         return self.response
+
+class UnexpectedApplication:
+    def query(self, text: str) -> AnalyticalResponse:
+        raise AssertionError(
+            "AnalyticsApplication should not be called."
+        )
 
 
 def make_client(application: Any) -> TestClient:
@@ -159,3 +166,184 @@ def test_analytics_query_execution_failure_hides_internal_message() -> None:
         "message": "Unable to execute the analytical query.",
         "stage": "query_execution",
     }
+
+
+def test_analytics_query_rejects_empty_question() -> None:
+    client = make_client(
+        StubAnalyticsApplication(
+            AnalyticalResponse(
+                success=True,
+                status=AnalyticalResponseStatus.SUCCESS,
+            )
+        )
+    )
+
+    response = client.post(
+        "/analytics/query",
+        json={"question": ""},
+    )
+
+    assert response.status_code == 422
+
+
+def test_analytics_query_rejects_missing_question() -> None:
+    client = make_client(
+        StubAnalyticsApplication(
+            AnalyticalResponse(
+                success=True,
+                status=AnalyticalResponseStatus.SUCCESS,
+            )
+        )
+    )
+
+    response = client.post(
+        "/analytics/query",
+        json={},
+    )
+
+    assert response.status_code == 422
+
+
+def test_analytics_query_rejects_question_exceeding_max_length() -> None:
+    client = make_client(
+        StubAnalyticsApplication(
+            AnalyticalResponse(
+                success=True,
+                status=AnalyticalResponseStatus.SUCCESS,
+            )
+        )
+    )
+
+    response = client.post(
+        "/analytics/query",
+        json={
+            "question": "a" * 2001,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_analytics_query_strips_question_whitespace() -> None:
+    application = StubAnalyticsApplication(
+        AnalyticalResponse(
+            success=True,
+            status=AnalyticalResponseStatus.SUCCESS,
+        )
+    )
+
+    client = make_client(application)
+
+    response = client.post(
+        "/analytics/query",
+        json={
+            "question": "  What were total sales?  ",
+        },
+    )
+
+    assert response.status_code == 200
+    assert application.questions == ["What were total sales?"]
+
+
+def test_analytics_query_rejects_whitespace_only_question() -> None:
+    client = make_client(UnexpectedApplication())
+
+    response = client.post(
+        "/analytics/query",
+        json={"question": "   "},
+    )
+
+    assert response.status_code == 422
+
+
+def test_analytics_query_merge_failure_returns_500():
+    """Result-merging failures are exposed as a stable 500 API error."""
+
+    class FailingAnalyticsApplication:
+        def query(self, question: str):
+            raise ResultMergeError("duplicate merge key: internal detail")
+
+    client = TestClient(create_app(auth_enabled=False))
+    client.app.dependency_overrides[get_analytics_application] = ( # type: ignore
+        lambda: FailingAnalyticsApplication()
+    )
+
+    response = client.post(
+        "/analytics/query",
+        json={"question": "Compare sales and expenses"},
+    )
+
+    assert response.status_code == 500
+
+    body = response.json()
+    assert body["detail"]["code"] == "RESULT_MERGE_FAILED"
+    assert body["detail"]["message"] == (
+        "Failed to combine analytical query results."
+    )
+    assert body["detail"]["stage"] == "result_merging"
+    assert "duplicate merge key" not in body["detail"]["message"]
+
+
+def test_analytics_query_unexpected_error_returns_500():
+    """Unexpected application failures are converted to a generic 500 error."""
+
+    class FailingAnalyticsApplication:
+        def query(self, question: str):
+            raise RuntimeError("database password=super-secret")
+
+    client = TestClient(create_app(auth_enabled=False))
+    client.app.dependency_overrides[get_analytics_application] = ( # type: ignore
+        lambda: FailingAnalyticsApplication()
+    )
+
+    response = client.post(
+        "/analytics/query",
+        json={"question": "What is our net sales?"},
+    )
+
+    assert response.status_code == 500
+
+    body = response.json()
+    assert body["detail"]["code"] == "INTERNAL_SERVER_ERROR"
+    assert body["detail"]["message"] == (
+        "An unexpected internal error occurred."
+    )
+    assert body["detail"]["stage"] == "internal"
+
+    # Internal exception details must never reach the API client.
+    assert "database password" not in str(body)
+    assert "super-secret" not in str(body)
+
+
+def test_analytics_query_unexpected_error_does_not_expose_exception_details():
+    """Generic 500 responses must not leak the original exception message."""
+
+    class FailingAnalyticsApplication:
+        def query(self, question: str):
+            raise ValueError(
+                "SQL connection failed: host=internal-db password=secret123"
+            )
+
+    client = TestClient(create_app(auth_enabled=False))
+    client.app.dependency_overrides[get_analytics_application] = ( # type: ignore
+        lambda: FailingAnalyticsApplication()
+    )
+
+    response = client.post(
+        "/analytics/query",
+        json={"question": "What were our sales yesterday?"},
+    )
+
+    assert response.status_code == 500
+
+    body = response.json()
+
+    assert body["detail"]["code"] == "INTERNAL_SERVER_ERROR"
+    assert body["detail"]["message"] == (
+        "An unexpected internal error occurred."
+    )
+
+    leaked_body = str(body)
+    assert "internal-db" not in leaked_body
+    assert "secret123" not in leaked_body
+    assert "SQL connection failed" not in leaked_body

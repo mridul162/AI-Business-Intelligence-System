@@ -16,6 +16,7 @@ from etl.analytics.nl_query.parser import (
     CompletionRequest,
     NLQueryParser,
 )
+from etl.analytics.providers.pricing import ModelPricing
 from etl.analytics.response.builder import AnalyticalResponseBuilder
 from etl.analytics.semantic import SemanticResolver
 
@@ -243,6 +244,7 @@ def test_get_nl_completion_passes_all_settings_to_openai_factory(
         *,
         model: str,
         api_key: str,
+        pricing: ModelPricing,
         timeout: float,
         max_attempts: int,
         retry_initial_backoff: float,
@@ -254,6 +256,7 @@ def test_get_nl_completion_passes_all_settings_to_openai_factory(
         captured["max_attempts"] = max_attempts
         captured["retry_initial_backoff"] = retry_initial_backoff
         captured["retry_max_backoff"] = retry_max_backoff
+        captured["price"] = pricing.input_price_per_million + pricing.output_price_per_million
 
         def completion(request: CompletionRequest) -> str:
             return "{}"
@@ -276,4 +279,5 @@ def test_get_nl_completion_passes_all_settings_to_openai_factory(
         "max_attempts": 4,
         "retry_initial_backoff": 0.25,
         "retry_max_backoff": 3.0,
+        "price": 300,
     }

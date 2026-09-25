@@ -4,13 +4,35 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+)
 
 
 class AnalyticalQuestionRequest(BaseModel):
     """Incoming natural-language analytical question."""
 
-    question: str = Field(..., min_length=1)
+    question: str = Field(
+        ...,
+        min_length=1,
+        max_length=2000,
+    )
+
+    @field_validator("question")
+    @classmethod
+    def validate_question(cls, value: str) -> str:
+        """Reject whitespace-only questions."""
+        value = value.strip()
+
+        if not value:
+            raise ValueError(
+                "Analytical question must not be empty."
+            )
+
+        return value
 
 
 class QueryContextSchema(BaseModel):
