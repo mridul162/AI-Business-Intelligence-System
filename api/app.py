@@ -22,6 +22,7 @@ def create_app(
     *,
     identity_store: IdentityStore | None = None,
     auth_enabled: bool | None = None,
+    token_service: TokenService | None = None,
 ) -> FastAPI:
     app = FastAPI(title="AI Business Intelligence API")
     configure_logging()
@@ -39,7 +40,7 @@ def create_app(
     app.state.identity_store = identity_store or SqlAlchemyIdentityStore(
         lambda: get_sessionmaker()()
     )
-    app.state.token_service = TokenService(
+    app.state.token_service = token_service or TokenService(
         settings.jwt_secret_key
         if settings is not None
         else "development-only-change-me-please-rotate"

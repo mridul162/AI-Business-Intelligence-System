@@ -61,3 +61,11 @@ class MissingTimeColumnError(SQLBuilderError):
     no configured time column for plan.source_view. See
     sql_builder.TIME_COLUMN_BY_SOURCE_VIEW.
     """
+
+class MissingTenantScopeError(SQLBuilderError):
+    """
+    No tenant scope was supplied and none could be resolved from request
+    context. Raised only when require_tenant_scope=True, so callers that
+    intentionally build unscoped queries (tests, admin/system tooling)
+    are unaffected.
+    """

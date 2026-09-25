@@ -11,6 +11,7 @@ from api.dependencies.analytics import get_analytics_application
 from api.security.authentication import AuthenticationService, TokenService
 from api.security.models import InMemoryIdentityStore, Role, Tenant, User
 from api.security.password import hash_password, verify_password
+from etl.analytics.response.models import AnalyticalResponse, AnalyticalResponseStatus
 
 
 def make_identity() -> tuple[InMemoryIdentityStore, User, TokenService]:
@@ -51,7 +52,20 @@ def test_authentication_rejects_inactive_users() -> None:
 def test_token_rejects_tampering_and_expiration() -> None:
     store, user, token_service = make_identity()
     token = token_service.create_access_token(user)
-    tampered = token[:-1] + ("a" if token[-1] != "a" else "b")
+
+    # Flip a character in the middle of the signature segment, not the
+    # last character of the token: the final base64 char of a SHA-256
+    # digest only encodes 4 real bits (the other 2 are padding, unchecked
+    # on decode), so mutating it can land on an equivalent byte value and
+    # silently fail to tamper anything.
+    header_b64, payload_b64, sig_b64 = token.split(".")
+    mid = len(sig_b64) // 2
+    tampered_sig = (
+        sig_b64[:mid]
+        + ("a" if sig_b64[mid] != "a" else "b")
+        + sig_b64[mid + 1:]
+    )
+    tampered = f"{header_b64}.{payload_b64}.{tampered_sig}"
 
     with pytest.raises(Exception):
         token_service.decode_access_token(tampered)
@@ -63,28 +77,35 @@ def test_token_rejects_tampering_and_expiration() -> None:
 
 def test_analytics_requires_authentication_and_accepts_valid_token() -> None:
     store, user, token_service = make_identity()
-    app = create_app(identity_store=store)
+    app = create_app(identity_store=store, token_service=token_service)
 
-    class StubApplication:
+    class RecordingApplication:
+        def __init__(self) -> None:
+            self.questions: list[str] = []
+
         def query(self, question: str):
-            raise RuntimeError("authenticated request reached analytics")
+            self.questions.append(question)
+            return AnalyticalResponse(
+                success=True,
+                status=AnalyticalResponseStatus.SUCCESS,
+            )
 
-    app.dependency_overrides[get_analytics_application] = StubApplication
+    application = RecordingApplication()
+    app.dependency_overrides[get_analytics_application] = lambda: application
     client = TestClient(app)
 
     missing = client.post("/analytics/query", json={"question": "sales"})
     assert missing.status_code == 401
+    assert application.questions == []  # confirms it never ran on the 401 path
 
     token = token_service.create_access_token(user)
-    try:
-        client.post(
-            "/analytics/query",
-            json={"question": "sales"},
-            headers={"Authorization": f"Bearer {token}"},
-        )
-    except RuntimeError as exc:
-        assert str(exc) == "authenticated request reached analytics"
-
+    response = client.post(
+        "/analytics/query",
+        json={"question": "sales"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert application.questions == ["sales"]
 
 def test_login_endpoint_issues_bearer_token() -> None:
     store, user, _ = make_identity()

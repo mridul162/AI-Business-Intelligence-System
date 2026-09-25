@@ -24,7 +24,7 @@ from etl.analytics.semantic.models import SemanticResolutionError
 from etl.analytics.planner.planner_errors import QueryPlanningLimitError
 from api.security.dependencies import require_authenticated_user
 from api.security.models import User
-from etl.analytics.sql.errors import SQLBuilderError
+from etl.analytics.sql.errors import SQLBuilderError, MissingTenantScopeError
 from etl.analytics.merger.errors import ResultMergeError
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -54,10 +54,10 @@ def _raise_api_error(
 )
 def query_analytics(
     request: AnalyticalQuestionRequest,
+    _: User = Depends(require_authenticated_user),
     application: AnalyticsApplication = Depends(
         get_analytics_application
     ),
-    _: User = Depends(require_authenticated_user),
 ) -> dict:
     """Execute one natural-language analytical query."""
 
@@ -104,6 +104,14 @@ def query_analytics(
             message=str(exc),
             stage="query_planning",
             http_status=status.HTTP_400_BAD_REQUEST,
+            cause=exc,
+        )
+    except MissingTenantScopeError as exc:
+        _raise_api_error(
+            code="MISSING_TENANT_SCOPE",
+            message="Unable to establish tenant context for this request.",
+            stage="query_building",
+            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             cause=exc,
         )
     except SQLBuilderError as exc:

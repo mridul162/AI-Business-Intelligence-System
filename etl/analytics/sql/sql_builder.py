@@ -27,6 +27,7 @@ from .errors import (
     InvalidLimitError,
     InvalidQueryPlanError,
     InvalidSortError,
+    MissingTenantScopeError,
     MissingTimeColumnError,
     SourceViewMismatchError,
     UnknownMetricError,
@@ -61,6 +62,7 @@ def build_query(
     time_column_by_view: Optional[Mapping[str, str]] = None,
     max_result_rows: int | None = None,
     tenant_scope: TenantScope | None = None,
+    require_tenant_scope: bool = False,
 ) -> BuiltQuery:
     """
     Validate `plan` and compile it into a BuiltQuery.
@@ -101,6 +103,16 @@ def build_query(
         request_context = get_request_context()
         if request_context is not None and request_context.tenant_id is not None:
             tenant_scope = TenantScope(request_context.tenant_id)
+    
+    if tenant_scope is None:
+        if require_tenant_scope:
+            raise MissingTenantScopeError(
+                "No tenant scope available: request context is missing "
+                "or has no tenant_id, and no tenant_scope was supplied "
+                "explicitly. Refusing to build an unscoped query."
+            )
+    else:
+        where_clauses.append(clauses.tenant_scope_clause(tenant_scope))
     if tenant_scope is not None:
         where_clauses.append(clauses.tenant_scope_clause(tenant_scope))
     where_clauses += _validate_and_build_user_filters(plan, metric_defs)

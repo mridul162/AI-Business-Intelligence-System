@@ -64,6 +64,7 @@ def create_analytics_application(
         build_query,
         get_metric=get_metric,
         max_result_rows=settings.max_result_rows,
+        require_tenant_scope=True,
     )
 
     orchestrator = AnalyticsQueryOrchestrator(

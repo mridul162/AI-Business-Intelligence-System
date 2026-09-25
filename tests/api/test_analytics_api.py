@@ -347,3 +347,20 @@ def test_analytics_query_unexpected_error_does_not_expose_exception_details():
     assert "internal-db" not in leaked_body
     assert "secret123" not in leaked_body
     assert "SQL connection failed" not in leaked_body
+
+
+def test_success_field_is_true_whenever_status_is_200() -> None:
+    """Guards against a future change that returns success=False with a 200.
+
+    AnalyticalResponseBuilder currently always sets success=True, so this
+    can't fail today — it's here to catch a regression, not a live bug.
+    """
+    application = StubAnalyticsApplication(
+        AnalyticalResponse(success=True, status=AnalyticalResponseStatus.EMPTY)
+    )
+    client = make_client(application)
+
+    response = client.post("/analytics/query", json={"question": "no rows"})
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
