@@ -173,7 +173,7 @@ class TestAnalyticsApplication:
         self.application.query("What are my total sales?")
 
         self.query_orchestrator.execute.assert_called_once_with(
-            self.resolved_request
+            self.resolved_request, tenant_scope=None
         )
 
     def test_query_passes_request_and_result_to_response_builder(

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from datetime import date
 from typing import Callable, Protocol
 from time import perf_counter
@@ -22,6 +24,7 @@ from etl.analytics.semantic.time_resolver import resolve_analytical_query_time
 
 from etl.observability.timing import timed_stage
 from etl.observability.metrics import metrics
+from etl.analytics.context.request_context import TenantScope
 
 import logging
 
@@ -84,8 +87,10 @@ class AnalyticsApplication:
         question: str,
         *,
         today: date | None = None,
+        tenant_id: UUID | None = None,
     ) -> AnalyticalResponse:
         started_at = perf_counter()
+        tenant_scope = TenantScope(tenant_id) if tenant_id is not None else None
 
         metrics.increment("analytics_queries_total")
 
@@ -128,7 +133,9 @@ class AnalyticsApplication:
                 metrics=metrics,
             ):
                 analytical_result: AnalyticalResult = (
-                    self.query_orchestrator.execute(resolved_request)
+                    self.query_orchestrator.execute(
+                        resolved_request, tenant_scope=tenant_scope
+                    )
                 )
 
             with timed_stage(

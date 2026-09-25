@@ -67,6 +67,12 @@ def _raise_api_error(
         401: {
             "description": "Authentication is required.",
         },
+        422: {
+            "model": APIErrorResponseSchema,
+            "description": (
+                "The analytical question could not be parsed or resolved."
+            ),
+        },
         500: {
             "model": APIErrorResponseSchema,
             "description": "An internal analytics processing error occurred.",
@@ -81,7 +87,7 @@ def _raise_api_error(
 
 def query_analytics(
     request: AnalyticalQuestionRequest,
-    _: User = Depends(require_authenticated_user),
+    current_user: User = Depends(require_authenticated_user),
     application: AnalyticsApplication = Depends(
         get_analytics_application
     ),
@@ -89,7 +95,10 @@ def query_analytics(
     """Execute one natural-language analytical query."""
 
     try:
-        response = application.query(request.question)
+        response = application.query(
+            request.question,
+            tenant_id=current_user.tenant_id if current_user is not None else None,
+        )
     except InvalidQuestionError as exc:
         _raise_api_error(
             code="INVALID_QUESTION",

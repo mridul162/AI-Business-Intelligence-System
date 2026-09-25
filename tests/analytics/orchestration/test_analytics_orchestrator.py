@@ -68,7 +68,7 @@ def test_single_plan_calls_planner_builder_executor_not_merger(fakes):
     orchestrator.execute(request)
 
     planner.assert_called_once_with(request)
-    builder.assert_called_once_with(plan)
+    builder.assert_called_once_with(plan, tenant_scope=None)
     executor.execute.assert_called_once_with(built_query)
     merger.merge.assert_not_called()
 
@@ -108,7 +108,7 @@ def test_multi_plan_two_plans_builder_and_executor_called_twice_merger_once(fake
     result_a, result_b = make_execution_result(Decimal("1")), make_execution_result(Decimal("2"))
 
     planner.return_value = multi_plan
-    builder.side_effect = {plan_a: built_a, plan_b: built_b}.get
+    builder.side_effect = lambda p, tenant_scope=None: {plan_a: built_a, plan_b: built_b}.get(p)
     executor.execute.side_effect = {built_a: result_a, built_b: result_b}.get
     merger.merge.return_value = MergedResult(
         columns=("m",), rows=({"m": Decimal("3")},), row_count=1, merge_strategy=MergeStrategy.SIDE_BY_SIDE
@@ -131,7 +131,8 @@ def test_multi_plan_three_plans_all_processed(fakes):
     result_by_built = {b: make_execution_result(Decimal(i)) for i, b in enumerate(built_by_plan.values())}
 
     planner.return_value = multi_plan
-    builder.side_effect = built_by_plan.get
+    builder.side_effect = lambda p, tenant_scope=None: built_by_plan.get(p)
+    
     executor.execute.side_effect = result_by_built.get
     merger.merge.return_value = MergedResult(
         columns=("m",), rows=(), row_count=0, merge_strategy=MergeStrategy.SIDE_BY_SIDE
@@ -152,7 +153,7 @@ def test_multi_plan_result_propagated_correctly(fakes):
     multi_plan = MultiQueryPlan(plans=(plan_a, plan_b), merge_strategy=MergeStrategy.COMPARE_METRICS)
 
     planner.return_value = multi_plan
-    builder.side_effect = lambda p: make_built_query(p, p.source_view)
+    builder.side_effect = lambda p, tenant_scope=None: make_built_query(p, p.source_view)
     executor.execute.side_effect = lambda bq: make_execution_result(Decimal("1"))
     merged = MergedResult(
         columns=("gross_sales", "total_expenses"),
@@ -188,7 +189,7 @@ def test_correct_plan_result_association_passed_to_merger(fakes):
     result_b = make_execution_result(Decimal("222"))
 
     planner.return_value = multi_plan
-    builder.side_effect = {plan_a: built_a, plan_b: built_b}.get
+    builder.side_effect = lambda p, tenant_scope=None: {plan_a: built_a, plan_b: built_b}.get(p)
     executor.execute.side_effect = {built_a: result_a, built_b: result_b}.get
     merger.merge.return_value = MergedResult(
         columns=("m",), rows=(), row_count=0, merge_strategy=MergeStrategy.SIDE_BY_SIDE
@@ -240,7 +241,7 @@ def test_builder_failure_on_second_plan_stops_before_merge(fakes):
 
     planner.return_value = multi_plan
 
-    def builder_side_effect(plan):
+    def builder_side_effect(plan, tenant_scope=None):
         if plan is plan_a:
             return built_a
         raise ValueError("bad plan for builder")
@@ -282,7 +283,7 @@ def test_merger_failure_propagates(fakes):
     multi_plan = MultiQueryPlan(plans=(plan_a, plan_b), merge_strategy=MergeStrategy.SIDE_BY_SIDE)
 
     planner.return_value = multi_plan
-    builder.side_effect = lambda p: make_built_query(p, p.source_view)
+    builder.side_effect = lambda p, tenant_scope=None: make_built_query(p, p.source_view)
     executor.execute.return_value = make_execution_result(Decimal("1"))
     merger.merge.side_effect = KeyError("duplicate merge key")
 

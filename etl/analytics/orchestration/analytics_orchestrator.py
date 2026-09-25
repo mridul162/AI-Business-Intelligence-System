@@ -34,6 +34,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Protocol
 
+from etl.analytics.context.request_context import TenantScope
 from etl.analytics.executor.execution_models import ExecutionResult
 from etl.analytics.merger.merge_models import ExecutedQuery, MergedResult
 from etl.analytics.planner.query_plan import MultiQueryPlan, QueryPlan, QueryPlanResult
@@ -49,7 +50,7 @@ from etl.observability.timing import timed_stage
 logger = logging.getLogger(__name__)
 
 Planner = Callable[[Any], QueryPlanResult]
-Builder = Callable[[QueryPlan], BuiltQuery]
+Builder = Callable[..., BuiltQuery]
 
 
 class ExecutorLike(Protocol):
@@ -99,7 +100,12 @@ class AnalyticsQueryOrchestrator:
         self._executor = executor
         self._merger = merger
 
-    def execute(self, request: Any) -> AnalyticalResult:
+    def execute(
+            self, 
+            request: Any,
+            *,
+            tenant_scope: TenantScope | None = None,
+    ) -> AnalyticalResult:
         """
         Run `request` through plan -> build -> execute -> (merge) and
         return one canonical AnalyticalResult.
@@ -115,22 +121,27 @@ class AnalyticsQueryOrchestrator:
             plan_result = self._planner(request)
 
         if isinstance(plan_result, QueryPlan):
-            return self._execute_single(plan_result)
+            return self._execute_single(plan_result, tenant_scope=tenant_scope) # type: ignore
 
         if isinstance(plan_result, MultiQueryPlan):
-            return self._execute_multi(plan_result)
+            return self._execute_multi(plan_result, tenant_scope=tenant_scope) # type: ignore
 
         raise InvalidPlanResultError(
             f"Planner returned {type(plan_result)!r}, expected QueryPlan "
             f"or MultiQueryPlan."
         )
 
-    def _execute_single(self, plan: QueryPlan) -> AnalyticalResult:
+    def _execute_single(
+        self, 
+        plan: QueryPlan,
+        *,
+        tenant_scope: TenantScope | None = None
+    ) -> AnalyticalResult:
         with timed_stage(
             "sql_building",
             logger=logger,
         ):
-            built_query = self._builder(plan)
+            built_query = self._builder(plan, tenant_scope=tenant_scope)
 
         with timed_stage(
             "database_execution",
@@ -140,7 +151,12 @@ class AnalyticsQueryOrchestrator:
 
         return AnalyticalResult.from_execution_result(execution_result)
 
-    def _execute_multi(self, multi_plan: MultiQueryPlan) -> AnalyticalResult:
+    def _execute_multi(
+        self, 
+        multi_plan: MultiQueryPlan,
+        *,
+        tenant_scope: TenantScope | None = None
+    ) -> AnalyticalResult:
         executed_queries: list[ExecutedQuery] = []
 
         for index, plan in enumerate(multi_plan.plans):
@@ -149,7 +165,7 @@ class AnalyticsQueryOrchestrator:
                 logger=logger,
                 plan_index=index,
             ):
-                built_query = self._builder(plan)
+                built_query = self._builder(plan, tenant_scope=tenant_scope)
 
             with timed_stage(
                 "database_execution",

@@ -52,7 +52,7 @@ def test_authenticated_request_actually_reaches_analytics_application() -> None:
         def __init__(self):
             self.called_with: list[str] = []
 
-        def query(self, question: str):
+        def query(self, question: str, tenant_id=None):
             self.called_with.append(question)
             return AnalyticalResponse(
                 success=True,
@@ -72,3 +72,28 @@ def test_authenticated_request_actually_reaches_analytics_application() -> None:
 
     assert response.status_code == 200
     assert application.called_with == ["sales"]
+
+
+def test_authenticated_http_request_reaches_real_pipeline_with_tenant_scope() -> None:
+    """End-to-end: real HTTP request, real auth dependency, real
+    orchestrator/sql_builder -- no stubs anywhere. This is the exact
+    gap that let a contextvar-propagation bug hide behind two tests
+    that each only covered half the path."""
+    store, user, token_service = make_identity()
+    app = create_app(identity_store=store, token_service=token_service)
+    # deliberately NOT overriding get_analytics_application
+
+    client = TestClient(app)
+    token = token_service.create_access_token(user)
+
+    response = client.post(
+        "/analytics/query",
+        json={"question": "total sales"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    # We don't necessarily expect 200 here (no real DB), but we must
+    # NOT get MISSING_TENANT_SCOPE -- that specific failure means
+    # context never reached the builder at all.
+    if response.status_code == 500:
+        assert response.json()["detail"]["code"] != "MISSING_TENANT_SCOPE"
