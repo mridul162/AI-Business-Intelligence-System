@@ -83,7 +83,7 @@ def test_analytics_requires_authentication_and_accepts_valid_token() -> None:
         def __init__(self) -> None:
             self.questions: list[str] = []
 
-        def query(self, question: str):
+        def query(self, question: str, tenant_id=None):
             self.questions.append(question)
             return AnalyticalResponse(
                 success=True,

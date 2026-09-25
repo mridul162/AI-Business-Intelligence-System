@@ -11,6 +11,8 @@ from pydantic import (
     field_validator,
 )
 
+from etl.analytics.response.models import AnalyticalResponseStatus
+
 
 class AnalyticalQuestionRequest(BaseModel):
     """Incoming natural-language analytical question."""
@@ -73,7 +75,7 @@ class AnalyticalResponseSchema(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
     success: bool
-    status: str
+    status: AnalyticalResponseStatus
     query: QueryContextSchema | None = None
     metadata: ResponseMetadataSchema | None = None
     data: list[dict[str, Any]] = Field(default_factory=list)

@@ -34,7 +34,7 @@ class FakeAnalyticsApplication:
         self.exception = exception
         self.questions: list[str] = []
 
-    def query(self, question: str) -> AnalyticalResponse:
+    def query(self, question: str, tenant_id=None) -> AnalyticalResponse:
         self.questions.append(question)
 
         if self.exception is not None:
