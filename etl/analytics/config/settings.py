@@ -29,8 +29,15 @@ class Settings(BaseSettings):
     # OpenAI Provider
     # ------------------------------------------------------------------
 
-    openai_api_key: str = ""
-    nl_query_model: str = "gpt-4.1-mini"
+    openai_api_key: str = Field(
+        default="",
+        validation_alias="AIBI_OPENAI_API_KEY",
+    )
+    
+    nl_query_model: str = Field(
+        default="gpt-4.1-mini",
+        validation_alias="AIBI_NL_QUERY_MODEL",
+    )
 
     # ------------------------------------------------------------------
     # LLM Reliability
@@ -218,12 +225,22 @@ class Settings(BaseSettings):
     )
 
     @model_validator(mode="after")
-    def validate_auth_policy(self) -> "Settings":
-        if self.environment == "production" and not self.auth_enabled:
+    def validate_production_policy(self) -> "Settings":
+        if self.environment != "production":
+            return self
+
+        if not self.auth_enabled:
             raise ValueError("Authentication cannot be disabled in production.")
-        if self.auth_enabled and self.environment == "production":
-            if self.jwt_secret_key.startswith("development-only"):
-                raise ValueError("Production must configure AIBI_JWT_SECRET_KEY.")
+
+        if self.jwt_secret_key.startswith("development-only"):
+            raise ValueError("Production must configure AIBI_JWT_SECRET_KEY.")
+
+        if not self.openai_api_key.strip():
+            raise ValueError("Production must configure AIBI_OPENAI_API_KEY.")
+
+        if not self.db_password:
+            raise ValueError("Production must configure AIBI_DB_PASSWORD.")
+
         return self
 
 

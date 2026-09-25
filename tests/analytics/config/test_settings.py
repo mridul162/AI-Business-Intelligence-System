@@ -90,6 +90,7 @@ def test_environment_variables_override_defaults(
     _set_required_db_env(monkeypatch)
 
     monkeypatch.setenv("AIBI_ENVIRONMENT", "production")
+    monkeypatch.setenv("AIBI_OPENAI_API_KEY", "test-openai-key")
     monkeypatch.setenv("AIBI_JWT_SECRET_KEY", "production-secret-key-0123456789")
     monkeypatch.setenv("AIBI_DB_HOST", "postgres.example.com")
     monkeypatch.setenv("AIBI_DB_PORT", "5433")
@@ -233,3 +234,39 @@ def test_production_rejects_the_development_jwt_secret(
 
     with pytest.raises(ValidationError):
         Settings()  # type: ignore
+
+
+def test_production_requires_openai_api_key():
+    with pytest.raises(ValidationError, match="AIBI_OPENAI_API_KEY"):
+        Settings(
+            environment="production",
+            openai_api_key="",
+            db_name="test",
+            db_user="test",
+            db_password="secret",
+            jwt_secret_key="a" * 64,
+        )
+
+
+def test_production_requires_database_password():
+    with pytest.raises(ValidationError, match="AIBI_DB_PASSWORD"):
+        Settings(
+            environment="production",
+            openai_api_key="test-key",
+            db_name="test",
+            db_user="test",
+            db_password="",
+            jwt_secret_key="a" * 64,
+        )
+
+
+def test_development_allows_missing_external_credentials():
+    settings = Settings(
+        environment="development",
+        openai_api_key="",
+        db_name="test",
+        db_user="test",
+        db_password="",
+    )
+
+    assert settings.environment == "development"
