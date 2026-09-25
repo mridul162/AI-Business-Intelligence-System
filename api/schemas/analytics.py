@@ -78,3 +78,8 @@ class AnalyticalResponseSchema(BaseModel):
     metadata: ResponseMetadataSchema | None = None
     data: list[dict[str, Any]] = Field(default_factory=list)
     error: AnalyticalErrorSchema | None = None
+
+class APIErrorResponseSchema(BaseModel):
+    """Public HTTP error response for analytics API failures."""
+
+    detail: AnalyticalErrorSchema

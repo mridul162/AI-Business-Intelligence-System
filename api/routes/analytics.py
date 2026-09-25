@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from api.dependencies.analytics import get_analytics_application
 from api.schemas.analytics import (
+    APIErrorResponseSchema,
     AnalyticalQuestionRequest,
     AnalyticalResponseSchema,
 )
@@ -51,7 +52,33 @@ def _raise_api_error(
 @router.post(
     "/query",
     response_model=AnalyticalResponseSchema,
+    summary="Execute an analytical query",
+    description=(
+        "Submit a natural-language business question. "
+        "The API resolves the question into an analytical query, "
+        "executes it against the analytics database, and returns "
+        "structured results and query metadata."
+    ),
+    responses={
+        400: {
+            "model": APIErrorResponseSchema,
+            "description": "The analytical query could not be planned or built.",
+        },
+        401: {
+            "description": "Authentication is required.",
+        },
+        500: {
+            "model": APIErrorResponseSchema,
+            "description": "An internal analytics processing error occurred.",
+        },
+        502: {
+            "model": APIErrorResponseSchema,
+            "description": "An upstream analytics dependency failed.",
+        },
+    },
 )
+
+
 def query_analytics(
     request: AnalyticalQuestionRequest,
     _: User = Depends(require_authenticated_user),

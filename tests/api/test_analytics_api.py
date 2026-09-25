@@ -364,3 +364,55 @@ def test_success_field_is_true_whenever_status_is_200() -> None:
 
     assert response.status_code == 200
     assert response.json()["success"] is True
+
+
+def test_analytics_openapi_contract() -> None:
+    """The analytics endpoint exposes its public API contract."""
+
+    app = create_app(auth_enabled=True)
+    schema = app.openapi()
+
+    operation = schema["paths"]["/analytics/query"]["post"]
+
+    assert operation["summary"] == "Execute an analytical query"
+
+    assert operation["responses"]["200"]["content"]["application/json"][
+        "schema"
+    ]["$ref"] == "#/components/schemas/AnalyticalResponseSchema"
+
+    assert "400" in operation["responses"]
+    assert "401" in operation["responses"]
+    assert "422" in operation["responses"]
+    assert "500" in operation["responses"]
+    assert "502" in operation["responses"]
+
+    assert operation["security"] == [{"HTTPBearer": []}]
+
+
+def test_analytics_openapi_error_response_schema() -> None:
+    """The analytics error response has a stable public schema."""
+
+    app = create_app(auth_enabled=True)
+    schema = app.openapi()
+
+    error_schema = schema["components"]["schemas"]["APIErrorResponseSchema"]
+
+    assert error_schema["type"] == "object"
+    assert error_schema["properties"]["detail"]["$ref"] == (
+        "#/components/schemas/AnalyticalErrorSchema"
+    )
+
+
+def test_analytics_openapi_question_constraints() -> None:
+    """The OpenAPI schema exposes the question validation contract."""
+
+    app = create_app(auth_enabled=True)
+    schema = app.openapi()
+
+    question = schema["components"]["schemas"][
+        "AnalyticalQuestionRequest"
+    ]["properties"]["question"]
+
+    assert question["type"] == "string"
+    assert question["minLength"] == 1
+    assert question["maxLength"] == 2000
