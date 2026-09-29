@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     )
     
     nl_query_model: str = Field(
-        default="gpt-4.1-mini",
+        default="gpt-6-luna",
         validation_alias="AIBI_NL_QUERY_MODEL",
     )
 
@@ -68,13 +68,13 @@ class Settings(BaseSettings):
     )
 
     llm_input_price_per_million: float = Field(
-        default=0.4*150,
+        default=0.1*150,
         ge=0,
         validation_alias="AIBI_LLM_INPUT_PRICE_PER_MILLION",
     )
 
     llm_output_price_per_million: float = Field(
-        default=1.60*150,
+        default=0.5*150,
         ge=0,
         validation_alias="AIBI_LLM_OUTPUT_PRICE_PER_MILLION",
     )
@@ -222,6 +222,15 @@ class Settings(BaseSettings):
         default=30,
         gt=0,
         validation_alias="AIBI_JWT_ACCESS_TOKEN_EXPIRE_MINUTES",
+    )
+
+    # ------------------------------------------------------------------
+    # Validators
+    # ------------------------------------------------------------------
+
+    aibi_validation_tenant_id: str = Field(
+        default="00000000-0000-0000-0000-000000000001",
+        validation_alias="AIBI_VALIDATION_TENANT_ID",
     )
 
     @model_validator(mode="after")

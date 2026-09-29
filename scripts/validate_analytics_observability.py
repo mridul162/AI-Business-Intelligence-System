@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import json
 from pprint import pprint
+import os
+from uuid import UUID
 
 from etl.analytics.application.factory import create_analytics_application
 from etl.analytics.config.settings import get_settings
@@ -347,13 +349,17 @@ def print_performance_report(snapshot) -> None:
 def run_query(
     question: str,
     application,
+    tenant_id: UUID,
 ) -> None:
     """Execute one analytical query and print its performance report."""
     # Reset metrics so this report represents this query only.
     metrics.reset()
 
     try:
-        response = application.query(question)
+        response = application.query(
+            question,
+            tenant_id=tenant_id,
+        )
 
     except Exception:
         print_section("QUERY FAILED")
@@ -379,6 +385,20 @@ def main() -> None:
 
     settings = get_settings()
 
+    validation_tenant_id = settings.aibi_validation_tenant_id
+
+    if not validation_tenant_id:
+        raise RuntimeError(
+            "AIBI_VALIDATION_TENANT_ID is required for analytics validation."
+        )
+
+    try:
+        tenant_id = UUID(validation_tenant_id)
+    except ValueError as exc:
+        raise RuntimeError(
+            "AIBI_VALIDATION_TENANT_ID must be a valid UUID."
+        ) from exc
+
     application = create_analytics_application(
         settings=settings,
     )
@@ -402,6 +422,7 @@ def main() -> None:
         run_query(
             question,
             application=application,
+            tenant_id=tenant_id,
         )
 
 

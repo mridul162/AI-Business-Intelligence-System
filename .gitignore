@@ -3,14 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-evaluation_report.txt
-projectflow_2.md
-table_columns.txt
-progress.txt
-phase_11.md
-phase_12.md
-sql_queries.txt
 
+planning/
+docs/
 
 # C extensions
 *.so
@@ -125,9 +120,7 @@ ipython_config.py
 # pdm.toml
 .pdm-python
 .pdm-build/
-scripts.txt
-docs/
-projectflow.txt
+
 
 
 # pixi
